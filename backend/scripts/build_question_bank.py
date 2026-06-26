@@ -50,10 +50,10 @@ client_groq = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 # ─── 1. Curriculum ────────────────────────────────────────────────────────────
 
-# 🚨 ISOLATED TEST MODE: Only generating Python to verify formatting
+# 🎯 TARGET MODE: Only regenerating SQL — all other sections preserved
 SECTIONS = [
-    # "SQL",
-    "Python",
+    "SQL",
+    # "Python",
     # "Pandas",
     # "Data Visualization",
     # "Applied Statistics",
@@ -125,6 +125,29 @@ def build_prompt(section: str, difficulty: str, target_count: int) -> str:
             "logic: built-in data structures (list, dict, set, tuple), comprehensions, "
             "generators, itertools, functools, collections, exception handling, decorators, "
             "closures, and memory management."
+        )
+    elif section == "SQL":
+        domain_rules = (
+            "DOMAIN ISOLATION & SQL STYLING RULES (CRITICAL):\n"
+            "\u2022 Every SQL query MUST be enclosed inside a proper GitHub-Flavored Markdown fenced code block beginning with ```sql and ending with ```.\n"
+            "\u2022 The SQL code block MUST terminate immediately after the final SQL clause or semicolon.\n"
+            "\u2022 Never place English explanations, hints, or question text inside the SQL code block.\n"
+            "\u2022 SQL keywords MUST always be uppercase (SELECT, FROM, WHERE, GROUP BY, HAVING, ORDER BY, CASE, WHEN, THEN, ELSE, END, COALESCE, NULLIF, ROW_NUMBER, OVER, PARTITION BY, CAST).\n"
+            "\u2022 Format SQL professionally with proper indentation.\n"
+            "\u2022 NEVER flatten complex SQL into a single line.\n"
+            "\u2022 Use realistic analytics and data-science scenarios (customers, orders, experiments, transactions, predictions, logs, datasets).\n"
+            "\u2022 Include practical SQL topics such as NULL handling, COALESCE, NULLIF, GROUP BY, HAVING, JOINs, CTEs, ROW_NUMBER(), PARTITION BY, deduplication, string cleaning, type casting, and aggregations.\n"
+            "\u2022 Never leave literal text such as 'sql SELECT ...' inside prose. The query must appear only inside a fenced SQL block.\n"
+            "\n"
+            "INCORRECT:\n"
+            "```sql SELECT * FROM users WHERE age > 30;```\n"
+            "\n"
+            "CORRECT:\n"
+            "```sql\n"
+            "SELECT *\n"
+            "FROM users\n"
+            "WHERE age > 30;\n"
+            "```\n"
         )
     else:
         domain_rules = (
@@ -203,6 +226,35 @@ def build_prompt(section: str, difficulty: str, target_count: int) -> str:
         "    where N starts at 1 (e.g., `python_easy_q1`, `python_easy_q2`, ...).\n"
         "\n"
         f"{image_rule}\n"
+        "\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "QUESTION QUALITY RULES\n"
+        "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        "\n"
+        "SQL INTERNAL VALIDATION (apply before returning each SQL question):\n"
+        "  \u2022 Every SQL block begins exactly with ```sql (on its own line).\n"
+        "  \u2022 Every SQL block ends exactly with ``` (on its own line).\n"
+        "  \u2022 Every SQL block contains multiple properly indented SQL lines.\n"
+        "  \u2022 No English prose appears inside any SQL fence.\n"
+        "  \u2022 Indentation is preserved; SQL keywords are uppercase.\n"
+        "\n"
+        "NO DUPLICATED OPTIONS IN CODE:\n"
+        "  You are STRICTLY FORBIDDEN from embedding or commenting answer choices\n"
+        "  (Option A / Option B / Option C / Option D) inside any SQL or Python code block.\n"
+        "  Code blocks must contain ONLY executable SQL/Python.\n"
+        "  All answer choices must exist exclusively inside the JSON \"options\" array.\n"
+        "\n"
+        "STANDARDIZED QUESTION WORDING:\n"
+        "  Use consistent interview-style openings, for example:\n"
+        "    \"Consider the following SQL query:\"\n"
+        "    \"What will be returned by the following SQL query?\"\n"
+        "    \"Given the following SQL statement:\"\n"
+        "    \"Analyze the following SQL query:\"\n"
+        "\n"
+        "REALISTIC SQL ONLY:\n"
+        "  Never generate toy SQL examples such as SELECT * FROM table;\n"
+        "  Prefer realistic schemas: customers, orders, transactions, employees,\n"
+        "  sales, products, predictions, logs, experiments, clickstream, campaigns.\n"
         "\n"
         "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
         "OUTPUT FORMAT\n"

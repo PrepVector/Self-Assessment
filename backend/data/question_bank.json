@@ -28,113 +28,113 @@
         {
           "id": "sql_easy_q1",
           "difficulty": "Easy",
-          "text": "When cleaning a pricing dataset, some missing prices are recorded as `0` while others are recorded as `NULL`. To normalize this data, you want to replace both `0` and `NULL` values with a default price of `99.99`. You write the following query: ```sql\nSELECT COALESCE(NULLIF(price, 0), 99.99) AS cleaned_price\nFROM products;\n``` What is the behavior of this query when `price` is `0`, `NULL`, or `45.50`?",
+          "text": "Consider a table named `users` with columns `user_id`, `username`, and `email`. What SQL query would retrieve all columns for all users?",
           "options": [
-            "It returns `99.99` for `0`, `99.99` for `NULL`, and `45.50` for `45.50`.",
-            "It returns `0` for `0`, `99.99` for `NULL`, and `45.50` for `45.50`.",
-            "It returns `NULL` for `0`, `99.99` for `NULL`, and `45.50` for `45.50`.",
-            "It throws a runtime error because `NULLIF` cannot accept numeric values."
+            "SELECT user_id, username, email FROM users;",
+            "SELECT * FROM users;",
+            "GET ALL FROM users;",
+            "SELECT users;"
           ],
-          "correct_answer": "It returns `99.99` for `0`, `99.99` for `NULL`, and `45.50` for `45.50`.",
-          "explanation": "The `NULLIF(price, 0)` function compares `price` to `0`. If they are equal, it returns `NULL`; otherwise, it returns the original `price`. Therefore, if `price` is `0`, `NULLIF` returns `NULL`. If `price` is `NULL`, it also returns `NULL`. The outer `COALESCE` function then evaluates the result: if it is `NULL`, it returns the fallback value of `99.99`. If `price` is `45.50`, `NULLIF` returns `45.50`, and `COALESCE` returns `45.50` because it is non-null.",
+          "correct_answer": "SELECT * FROM users;",
+          "explanation": "The `SELECT *` statement is used to retrieve all columns from a table. Specifying individual column names would also work but `*` is a shorthand for all columns.",
           "image_path": null
         },
         {
           "id": "sql_easy_q2",
           "difficulty": "Easy",
-          "text": "A clickstream event table contains duplicate events for the same `session_id` and `timestamp`. To deduplicate the dataset and keep only the first event per session, you write the following query: ```sql\nWITH ranked_events AS\n  (SELECT event_id,\n          session_id, timestamp, ROW_NUMBER() OVER (PARTITION BY session_id\n                                                    ORDER BY timestamp ASC) AS rn\n   FROM clickstream)\nSELECT event_id,\n       session_id, timestamp\nFROM ranked_events\nWHERE rn = 1;\n``` What is the primary reason for using `ROW_NUMBER()` instead of `RANK()` in this deduplication scenario?",
+          "text": "Given a `customers` table with columns `customer_id`, `name`, and `city`, which SQL query would list all customers who live in 'New York'?",
           "options": [
-            "`ROW_NUMBER()` assigns sequential integers starting at 1, ensuring exactly one row is assigned `rn = 1` even if timestamps are identical, whereas `RANK()` would assign `1` to all tied rows, failing to deduplicate.",
-            "`ROW_NUMBER()` is the only window function allowed in a Common Table Expression (CTE).",
-            "`ROW_NUMBER()` ignores the `PARTITION BY` clause and ranks the entire table.",
-            "`ROW_NUMBER()` automatically deletes the duplicate rows from the underlying physical table."
+            "SELECT * FROM customers WHERE city = 'New York';",
+            "SELECT name FROM customers IN city 'New York';",
+            "SELECT * FROM customers HAVING city = 'New York';",
+            "SELECT * FROM customers FILTER BY city = 'New York';"
           ],
-          "correct_answer": "`ROW_NUMBER()` assigns sequential integers starting at 1, ensuring exactly one row is assigned `rn = 1` even if timestamps are identical, whereas `RANK()` would assign `1` to all tied rows, failing to deduplicate.",
-          "explanation": "`ROW_NUMBER()` guarantees a unique, sequential integer for each row within a partition, regardless of ties in the `ORDER BY` column. If two events have the exact same timestamp, `ROW_NUMBER()` will still assign one of them `rn = 1` and the other `rn = 2`. In contrast, `RANK()` would assign `rn = 1` to both tied rows, meaning the `WHERE rn = 1` filter would fail to deduplicate them.",
+          "correct_answer": "SELECT * FROM customers WHERE city = 'New York';",
+          "explanation": "The `WHERE` clause is used to filter records based on a specified condition. In this case, `city = 'New York'` filters for customers residing in New York. `HAVING` is used for filtering groups, not individual rows, and `IN` or `FILTER BY` are not standard SQL syntax for this purpose.",
           "image_path": null
         },
         {
           "id": "sql_easy_q3",
           "difficulty": "Easy",
-          "text": "You have a staging table `raw_users` where the `age` column is stored as `VARCHAR`. Some rows contain non-numeric values like `'N/A'` or `'unknown'`. You run the following query in a standard SQL database: ```sql\nSELECT CAST(age AS INTEGER)\nFROM raw_users;\n``` What happens when this query encounters a row where `age` is `'N/A'`?",
+          "text": "You have a `products` table with columns `product_id`, `product_name`, and `price`. How would you retrieve all products, ordered from the cheapest to the most expensive?",
           "options": [
-            "The query fails with a database error because `'N/A'` cannot be cast to an integer.",
-            "The query automatically converts `'N/A'` to `NULL` and continues executing.",
-            "The query converts `'N/A'` to `0` and continues executing.",
-            "The query ignores that row and returns only the rows with valid integers."
+            "SELECT * FROM products SORT BY price ASC;",
+            "SELECT * FROM products ORDER BY price ASC;",
+            "SELECT * FROM products WHERE price ASC;",
+            "SELECT * FROM products ARRANGE BY price;"
           ],
-          "correct_answer": "The query fails with a database error because `'N/A'` cannot be cast to an integer.",
-          "explanation": "Standard SQL `CAST` is strict. If a value cannot be converted to the target data type (e.g., converting the non-numeric string `'N/A'` to an `INTEGER`), the database engine will raise a runtime exception and the query will fail. To handle this safely, you must filter out non-numeric values using a `WHERE` clause or use a safe casting function like `TRY_CAST` if supported by your SQL dialect.",
+          "correct_answer": "SELECT * FROM products ORDER BY price ASC;",
+          "explanation": "The `ORDER BY` clause is used to sort the result set of a query. `ASC` specifies ascending order, meaning from the lowest price to the highest. `SORT BY` or `ARRANGE BY` are not standard SQL for this purpose.",
           "image_path": null
         },
         {
           "id": "sql_easy_q4",
           "difficulty": "Easy",
-          "text": "You are cleaning a `country` column in a customer database. The data has inconsistent casing, leading/trailing spaces, and some entries use hyphens instead of spaces. You write: ```sql\nSELECT DISTINCT LOWER(TRIM(REPLACE(country, '-', ' '))) AS cleaned_country\nFROM customers;\n``` If the input contains the values `' United-States '`, `'united states'`, and `'UNITED-STATES'`, how many distinct rows will this expression return for these three inputs?",
+          "text": "To retrieve only the first 5 records from an `orders` table, after ordering them by `order_date` in descending order, which clause should be used at the end of the query?",
           "options": [
-            "1",
-            "2",
-            "3",
-            "0"
+            "TOP 5;",
+            "FETCH 5 ROWS;",
+            "LIMIT 5;",
+            "HEAD 5;"
           ],
-          "correct_answer": "1",
-          "explanation": "Let us trace the transformation for each input. First, `' United-States '` has its hyphen replaced with a space by `REPLACE`, becoming `' United States '`. Then `TRIM` removes the leading and trailing spaces, resulting in `'United States'`. Finally, `LOWER` converts it to `'united states'`. Second, `'united states'` remains `'united states'`. Third, `'UNITED-STATES'` becomes `'UNITED STATES'`, then `'UNITED STATES'`, and finally `'united states'`. Since all three inputs resolve to the exact same string `'united states'`, the `DISTINCT` keyword collapses them into exactly 1 row.",
+          "correct_answer": "LIMIT 5;",
+          "explanation": "The `LIMIT` clause is a standard SQL feature (common in MySQL and PostgreSQL) used to restrict the number of rows returned by a query. Other databases might use `TOP` (SQL Server) or `FETCH NEXT N ROWS` (SQL Standard, Oracle, PostgreSQL). For general SQL questions, `LIMIT` is a very common and widely understood way to achieve this.",
           "image_path": null
         },
         {
           "id": "sql_easy_q5",
           "difficulty": "Easy",
-          "text": "You want to filter out corrupt rows from a sales database where the `revenue` is negative or missing (`NULL`). You write the following query: ```sql\nSELECT *\nFROM sales\nWHERE revenue >= 0;\n``` Does this query successfully filter out both negative and `NULL` values?",
+          "text": "What SQL query would return the total number of employees in an `employees` table?",
           "options": [
-            "Yes, because any comparison with `NULL` evaluates to `UNKNOWN` (falsy), so `NULL` rows are excluded along with negative values.",
-            "No, because `NULL` values are considered greater than `0` in standard SQL comparisons.",
-            "No, because `NULL >= 0` evaluates to `TRUE`, so `NULL` rows will be included.",
-            "Yes, but only if we explicitly set the database configuration to `SET ANSI_NULLS OFF`."
+            "SELECT SUM(employee_id) FROM employees;",
+            "SELECT TOTAL(employee_id) FROM employees;",
+            "SELECT COUNT(*) FROM employees;",
+            "SELECT NUMBER_OF_ROWS FROM employees;"
           ],
-          "correct_answer": "Yes, because any comparison with `NULL` evaluates to `UNKNOWN` (falsy), so `NULL` rows are excluded along with negative values.",
-          "explanation": "In SQL, three-valued logic applies where comparisons can return `TRUE`, `FALSE`, or `UNKNOWN`. Any comparison involving `NULL` (such as `revenue` $\\geq$ 0 when `revenue` is `NULL`) evaluates to `UNKNOWN`. Since a `WHERE` clause only retains rows where the condition evaluates to `TRUE`, rows with `NULL` values are excluded alongside rows where `revenue` is negative (which evaluates to `FALSE`).",
+          "correct_answer": "SELECT COUNT(*) FROM employees;",
+          "explanation": "The `COUNT(*)` aggregate function is used to count the total number of rows in a table. `SUM(employee_id)` would sum the `employee_id` values, not count the employees, and `TOTAL()` or `NUMBER_OF_ROWS` are not standard SQL functions.",
           "image_path": null
         },
         {
           "id": "sql_easy_q6",
           "difficulty": "Easy",
-          "text": "You are compiling user contact information and want to select the primary contact method. If `mobile_phone` is missing, use `work_phone`. If that is also missing, use `email`. If all are missing, default to `'No Contact'`. You write: ```sql\nSELECT COALESCE(mobile_phone, work_phone, email, 'No Contact') AS primary_contact\nFROM users;\n``` If a user has `mobile_phone = NULL`, `work_phone = '555-1234'`, and `email = 'user@test.com'`, what will the query return for this user?",
+          "text": "Given an `orders` table with columns `order_id` and `customer_id`, how would you count the number of orders each customer has placed?",
           "options": [
-            "'555-1234'",
-            "'user@test.com'",
-            "'No Contact'",
-            "A list containing both '555-1234' and 'user@test.com'"
+            "SELECT customer_id, COUNT(order_id) FROM orders;",
+            "SELECT customer_id, COUNT(*) FROM orders GROUP BY customer_id;",
+            "SELECT customer_id, COUNT(*) FROM orders WHERE customer_id IS NOT NULL;",
+            "SELECT COUNT(*) FROM orders GROUP BY customer_id;"
           ],
-          "correct_answer": "'555-1234'",
-          "explanation": "The `COALESCE` function evaluates its arguments from left to right and returns the first non-null value it encounters. In this case, the first argument `mobile_phone` is `NULL`, so it moves to the second argument `work_phone`. Since `work_phone` is `'555-1234'` (which is non-null), `COALESCE` immediately returns `'555-1234'` and terminates evaluation, ignoring the subsequent arguments.",
+          "correct_answer": "SELECT customer_id, COUNT(*) FROM orders GROUP BY customer_id;",
+          "explanation": "To count occurrences per distinct value of a column, you use the `GROUP BY` clause. The `customer_id` is included in the `SELECT` list alongside the `COUNT(*)` aggregate function, and `GROUP BY customer_id` ensures that the count is performed for each unique customer.",
           "image_path": null
         },
         {
           "id": "sql_easy_q7",
           "difficulty": "Easy",
-          "text": "You are calculating the click-through rate (CTR) using the formula: $$\\text{CTR} = \\frac{\\text{clicks}}{\\text{impressions}}$$ Some marketing campaigns have `0` impressions, which causes a division-by-zero error. You write: ```sql\nSELECT clicks / NULLIF(impressions, 0) AS ctr\nFROM campaigns;\n``` How does this query handle a campaign with `0` impressions?",
+          "text": "You have two tables: `customers` (with `customer_id`, `name`) and `orders` (with `order_id`, `customer_id`, `order_date`). Which query correctly joins these tables to show each customer's name alongside their order details?",
           "options": [
-            "It returns `NULL` for the CTR, avoiding a runtime division-by-zero error.",
-            "It returns `0` for the CTR.",
-            "It still throws a division-by-zero error because `NULLIF` returns `0` when the arguments are equal.",
-            "It returns `Infinity` because dividing by `NULL` is treated as dividing by an infinitely small number."
+            "SELECT c.name, o.order_id, o.order_date FROM customers c, orders o WHERE c.customer_id = o.customer_id;",
+            "SELECT c.name, o.order_id, o.order_date FROM customers c JOIN orders o ON c.customer_id = o.customer_id;",
+            "SELECT c.name, o.order_id, o.order_date FROM customers c LEFT JOIN orders o ON c.customer_id = o.customer_id;",
+            "SELECT c.name, o.order_id, o.order_date FROM customers c CROSS JOIN orders o WHERE c.customer_id = o.customer_id;"
           ],
-          "correct_answer": "It returns `NULL` for the CTR, avoiding a runtime division-by-zero error.",
-          "explanation": "The `NULLIF(impressions, 0)` function returns `NULL` if `impressions` is equal to `0`. In SQL, any arithmetic operation involving `NULL` (such as `clicks / NULL`) evaluates to `NULL`. This effectively prevents the database from attempting to divide by zero, which would otherwise trigger a runtime exception and crash the query.",
+          "correct_answer": "SELECT c.name, o.order_id, o.order_date FROM customers c JOIN orders o ON c.customer_id = o.customer_id;",
+          "explanation": "The `JOIN` keyword (which defaults to `INNER JOIN`) combined with the `ON` clause is the standard and most explicit way to join two tables based on a common column (`customer_id`). This returns only rows where there is a match in both tables. The comma-separated join in option 1 is an older syntax for an `INNER JOIN` but less preferred. `LEFT JOIN` would include customers without orders, and `CROSS JOIN` without a `WHERE` clause would produce a Cartesian product.",
           "image_path": null
         },
         {
           "id": "sql_easy_q8",
           "difficulty": "Easy",
-          "text": "You are cleaning a product catalog where some product codes are corrupted and contain trailing underscores (e.g., `'PROD_1_'`). You want to find all product codes that end with a literal underscore character. You write: ```sql\nSELECT product_code\nFROM products\nWHERE product_code LIKE '%\\_';\n``` Why is the backslash `\\` used before the underscore in the `LIKE` pattern?",
+          "text": "In a `products` table, some products might have a `NULL` value in their `description` column. How would you retrieve all products that do *not* have a description?",
           "options": [
-            "The underscore `_` is a wildcard in SQL representing any single character; the backslash escapes it to treat it as a literal underscore.",
-            "The backslash is required to indicate that the query should search from right to left.",
-            "The backslash converts the query to a regex search instead of a standard wildcard search.",
-            "Without the backslash, SQL would interpret `_` as a `NULL` value placeholder."
+            "SELECT * FROM products WHERE description = NULL;",
+            "SELECT * FROM products WHERE description IS NULL;",
+            "SELECT * FROM products WHERE description = 'NULL';",
+            "SELECT * FROM products WHERE ISNULL(description);"
           ],
-          "correct_answer": "The underscore `_` is a wildcard in SQL representing any single character; the backslash escapes it to treat it as a literal underscore.",
-          "explanation": "In standard SQL `LIKE` patterns, the percent sign `%` is a wildcard matching zero or more characters, and the underscore `_` is a wildcard matching exactly one character. To search for a literal underscore, you must escape it using an escape character (commonly `\\`). Without the escape character, `'%_'` would match any string that is at least one character long, rather than specifically matching strings ending in an underscore.",
+          "correct_answer": "SELECT * FROM products WHERE description IS NULL;",
+          "explanation": "In SQL, `NULL` represents the absence of a value and cannot be compared using standard equality operators (`=` or `!=`). Instead, you must use the `IS NULL` or `IS NOT NULL` operators to check for `NULL` values. `description = 'NULL'` would check for the literal string 'NULL', which is different from the `NULL` value.",
           "image_path": null
         }
       ],
@@ -142,113 +142,113 @@
         {
           "id": "sql_moderate_q1",
           "difficulty": "Moderate",
-          "text": "You are analyzing customer order data. The `orders` table has columns `order_id`, `customer_id`, `order_date`, and `total_amount`. You need to find customers who placed more than 5 orders and whose total spending across all orders is greater than $1000. Identify the SQL query that achieves this.",
+          "text": "Consider a database with two tables: `Customers` (`customer_id`, `customer_name`, `region`) and `Orders` (`order_id`, `customer_id`, `order_date`, `total_amount`).\n\nWhat will be returned by the following SQL query?\n\n```sql\nSELECT\n    c.customer_name,\n    COUNT(o.order_id) AS total_orders\nFROM\n    Customers AS c\nLEFT JOIN\n    Orders AS o ON c.customer_id = o.customer_id\nGROUP BY\n    c.customer_name\nHAVING\n    COUNT(o.order_id) >= 2\nORDER BY\n    total_orders DESC;\n```",
           "options": [
-            "SELECT customer_id FROM orders GROUP BY customer_id HAVING COUNT(order_id) > 5 AND SUM(total_amount) > 1000;",
-            "SELECT customer_id FROM orders WHERE COUNT(order_id) > 5 AND SUM(total_amount) > 1000 GROUP BY customer_id;",
-            "SELECT customer_id FROM orders GROUP BY customer_id HAVING COUNT(order_id) > 5 OR SUM(total_amount) > 1000;",
-            "SELECT customer_id FROM orders WHERE SUM(total_amount) > 1000 GROUP BY customer_id HAVING COUNT(order_id) > 5;"
+            "A list of all customers, including those with no orders, and their total order count, filtered to show only customers with 2 or more orders.",
+            "A list of customers who have placed at least 2 orders, along with the count of their orders, sorted by total orders in descending order.",
+            "A list of customers who have placed exactly 2 orders, along with the count of their orders, sorted by total orders in descending order.",
+            "A list of customers who have placed 2 or more orders, along with the count of their orders, but only if they have a `customer_id` present in the `Orders` table."
           ],
-          "correct_answer": "SELECT customer_id FROM orders GROUP BY customer_id HAVING COUNT(order_id) > 5 AND SUM(total_amount) > 1000;",
-          "explanation": "The correct query uses `GROUP BY customer_id` to aggregate orders per customer. The `HAVING` clause is correctly used to filter these groups based on aggregate conditions: `COUNT(order_id) > 5` ensures more than 5 orders, and `SUM(total_amount) > 1000` ensures total spending exceeds $1000. The `AND` operator correctly combines these conditions. Option 2 is incorrect because `WHERE` cannot be used with aggregate functions like `COUNT` and `SUM` directly; `HAVING` is required. Option 3 uses `OR` which would include customers meeting either condition, not both. Option 4 incorrectly places the `SUM(total_amount) > 1000` condition in the `WHERE` clause before grouping.",
+          "correct_answer": "A list of customers who have placed at least 2 orders, along with the count of their orders, sorted by total orders in descending order.",
+          "explanation": "The query performs a `LEFT JOIN` between `Customers` and `Orders` to include all customers, even those without orders. However, the `HAVING COUNT(o.order_id) >= 2` clause filters the grouped results, only keeping `customer_name` entries where the count of associated `order_id`s (which would be `NULL` for customers without orders, and `COUNT()` does not count `NULL`s) is 2 or more. This effectively means only customers who have placed at least two orders will be in the final result set. The `ORDER BY total_orders DESC` sorts these customers by their order count in descending order.",
           "image_path": null
         },
         {
           "id": "sql_moderate_q2",
           "difficulty": "Moderate",
-          "text": "Consider two tables: `employees` (`employee_id`, `name`, `department_id`) and `departments` (`department_id`, `department_name`). You want to list all employees and their department names. If an employee does not have a department assigned (i.e., `department_id` is NULL in the `employees` table), you want to display 'No Department'. Which query accomplishes this?",
+          "text": "You have a table `ProductDetails` with columns `product_id` and `product_name`, and another table `Inventory` with `product_id`, `warehouse_id`, and `quantity`. Some products might not have an entry in `ProductDetails` if their details are not yet finalized, but they might still appear in `Inventory` with a placeholder `product_name` as `NULL`.\n\nWhat is the purpose of the `COALESCE` function in the following query?\n\n```sql\nSELECT\n    i.product_id,\n    COALESCE(pd.product_name, 'Unnamed Product') AS display_name,\n    i.quantity\nFROM\n    Inventory AS i\nLEFT JOIN\n    ProductDetails AS pd ON i.product_id = pd.product_id\nWHERE\n    i.quantity > 0;\n```",
           "options": [
-            "SELECT e.name, COALESCE(d.department_name, 'No Department') FROM employees e LEFT JOIN departments d ON e.department_id = d.department_id;",
-            "SELECT e.name, d.department_name FROM employees e RIGHT JOIN departments d ON e.department_id = d.department_id WHERE d.department_name IS NULL;",
-            "SELECT e.name, IFNULL(d.department_name, 'No Department') FROM employees e INNER JOIN departments d ON e.department_id = d.department_id;",
-            "SELECT e.name, CASE WHEN d.department_name IS NULL THEN 'No Department' ELSE d.department_name END FROM employees e LEFT JOIN departments d ON e.department_id <> d.department_id;"
+            "To replace `NULL` values in `i.product_id` with 'Unnamed Product'.",
+            "To replace `NULL` values in `pd.product_name` with 'Unnamed Product' if a matching product is not found in `ProductDetails`.",
+            "To concatenate `pd.product_name` and 'Unnamed Product' if `pd.product_name` is not `NULL`.",
+            "To count the number of products that have `NULL` in `pd.product_name` and label them 'Unnamed Product'."
           ],
-          "correct_answer": "SELECT e.name, COALESCE(d.department_name, 'No Department') FROM employees e LEFT JOIN departments d ON e.department_id = d.department_id;",
-          "explanation": "The correct query uses a `LEFT JOIN` to include all employees from the `employees` table. `COALESCE(d.department_name, 'No Department')` replaces any NULL `department_name` values (which occur when an employee has no matching department) with 'No Department'. Option 2 uses a `RIGHT JOIN` and filters for NULL department names, which would only show departments without employees. Option 3 uses an `INNER JOIN`, which would exclude employees without a department. Option 4 uses a `LEFT JOIN` but the `CASE` statement is correct; however, the join condition `e.department_id <> d.department_id` is incorrect for matching departments and would produce incorrect results or no results if all department IDs are unique.",
+          "correct_answer": "To replace `NULL` values in `pd.product_name` with 'Unnamed Product' if a matching product is not found in `ProductDetails`.",
+          "explanation": "The `COALESCE` function returns the first non-`NULL` expression in its argument list. In this query, `COALESCE(pd.product_name, 'Unnamed Product')` means that if `pd.product_name` is `NULL` (which would happen if a `product_id` from `Inventory` does not have a matching entry in `ProductDetails` due to the `LEFT JOIN`), then 'Unnamed Product' will be used instead. If `pd.product_name` is not `NULL`, its value will be returned.",
           "image_path": null
         },
         {
           "id": "sql_moderate_q3",
           "difficulty": "Moderate",
-          "text": "You have a table `sales` with columns `sale_id`, `product_id`, `sale_date`, and `quantity`. You need to find the total quantity sold for each product, but only for sales that occurred in the year 2023. If a product had no sales in 2023, it should not appear in the results. Which query is correct?",
+          "text": "Given a table `Transactions` with columns `transaction_id`, `user_id`, `transaction_date`, and `amount`. You want to find the most recent transaction for each user.\n\nWhich of the following queries correctly identifies the most recent transaction for each unique `user_id`?\n\n```sql\n-- Option A\nSELECT\n    t1.*\nFROM\n    Transactions AS t1\nWHERE\n    t1.transaction_date = (\n        SELECT\n            MAX(t2.transaction_date)\n        FROM\n            Transactions AS t2\n        WHERE\n            t2.user_id = t1.user_id\n    );\n\n-- Option B\nWITH RankedTransactions AS (\n    SELECT\n        transaction_id,\n        user_id,\n        transaction_date,\n        amount,\n        ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY transaction_date DESC) AS rn\n    FROM\n        Transactions\n)\nSELECT\n    transaction_id,\n    user_id,\n    transaction_date,\n    amount\nFROM\n    RankedTransactions\nWHERE\n    rn = 1;\n\n-- Option C\nSELECT\n    user_id,\n    MAX(transaction_date) AS latest_date\nFROM\n    Transactions\nGROUP BY\n    user_id;\n\n-- Option D\nSELECT\n    DISTINCT user_id,\n    transaction_id,\n    transaction_date,\n    amount\nFROM\n    Transactions\nORDER BY\n    user_id, transaction_date DESC;\n```",
           "options": [
-            "SELECT product_id, SUM(quantity) AS total_quantity FROM sales WHERE EXTRACT(YEAR FROM sale_date) = 2023 GROUP BY product_id;",
-            "SELECT product_id, SUM(quantity) AS total_quantity FROM sales GROUP BY product_id HAVING EXTRACT(YEAR FROM sale_date) = 2023;",
-            "SELECT product_id, SUM(quantity) AS total_quantity FROM sales WHERE sale_date BETWEEN '2023-01-01' AND '2023-12-31' GROUP BY product_id;",
-            "SELECT product_id, SUM(quantity) AS total_quantity FROM sales WHERE product_id IN (SELECT product_id FROM sales WHERE EXTRACT(YEAR FROM sale_date) = 2023) GROUP BY product_id;"
+            "Option A",
+            "Option B",
+            "Option C",
+            "Option D"
           ],
-          "correct_answer": "SELECT product_id, SUM(quantity) AS total_quantity FROM sales WHERE EXTRACT(YEAR FROM sale_date) = 2023 GROUP BY product_id;",
-          "explanation": "Option 1 correctly filters the sales records for the year 2023 using `WHERE EXTRACT(YEAR FROM sale_date) = 2023` before grouping and summing. This ensures only relevant sales are considered. Option 2 is incorrect because the `HAVING` clause filters *after* aggregation, and `EXTRACT(YEAR FROM sale_date)` is not an aggregate function, so it cannot be used in `HAVING` to filter rows before aggregation. Option 3 is also correct and functionally equivalent to Option 1, assuming `sale_date` is a DATE or DATETIME type. However, Option 1 is more direct in expressing the year extraction. Option 4 uses a subquery to find products sold in 2023 and then groups by those products, which is less efficient than filtering directly.",
+          "correct_answer": "Option B",
+          "explanation": "Option B uses a Common Table Expression (CTE) with `ROW_NUMBER()` and `PARTITION BY`. `PARTITION BY user_id` divides the data into groups for each user, and `ORDER BY transaction_date DESC` assigns a rank within each user's group, with the most recent transaction getting `rn=1`. Filtering by `rn = 1` then correctly retrieves the most recent transaction for each user.\n\nOption A uses a correlated subquery which can be inefficient and might return multiple transactions if a user has multiple transactions on the same latest date.\n\nOption C only returns the `user_id` and the `MAX(transaction_date)`, but not the full transaction details (`transaction_id`, `amount`).\n\nOption D simply orders the data but does not filter to show only the most recent transaction per user; it would return all transactions.",
           "image_path": null
         },
         {
           "id": "sql_moderate_q4",
           "difficulty": "Moderate",
-          "text": "You have a table `user_activity` with columns `user_id`, `activity_timestamp`, and `activity_type`. You need to find the most recent activity for each user. If a user has multiple activities at the exact same latest timestamp, any one of them is acceptable. Which query correctly identifies the latest activity for each user?",
+          "text": "You are analyzing customer spending habits. You have a table `CustomerPurchases` with columns `customer_id`, `purchase_date`, and `purchase_amount`. You want to categorize customers into 'High Spender' (total purchases > $1000), 'Medium Spender' (total purchases between $501 and $1000), and 'Low Spender' (total purchases $\\le$ $500$).\n\nWhich of the following SQL queries correctly assigns these categories?\n\n```sql\nSELECT\n    cp.customer_id,\n    SUM(cp.purchase_amount) AS total_spending,\n    CASE\n        WHEN SUM(cp.purchase_amount) > 1000 THEN 'High Spender'\n        WHEN SUM(cp.purchase_amount) BETWEEN 501 AND 1000 THEN 'Medium Spender'\n        ELSE 'Low Spender'\n    END AS spending_category\nFROM\n    CustomerPurchases AS cp\nGROUP BY\n    cp.customer_id\nORDER BY\n    total_spending DESC;\n```",
           "options": [
-            "SELECT user_id, activity_type, activity_timestamp FROM (SELECT user_id, activity_type, activity_timestamp, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY activity_timestamp DESC) as rn FROM user_activity) AS ranked_activity WHERE rn = 1;",
-            "SELECT user_id, activity_type, MAX(activity_timestamp) FROM user_activity GROUP BY user_id;",
-            "SELECT user_id, activity_type, activity_timestamp FROM user_activity WHERE activity_timestamp IN (SELECT MAX(activity_timestamp) FROM user_activity GROUP BY user_id);",
-            "SELECT user_id, activity_type, activity_timestamp FROM user_activity ORDER BY activity_timestamp DESC LIMIT 1;"
+            "The query will return an error because `SUM(cp.purchase_amount)` cannot be used directly in a `CASE` statement.",
+            "The query will correctly categorize customers based on their total spending into 'High Spender', 'Medium Spender', and 'Low Spender'.",
+            "The query will only categorize customers with `total_spending` greater than $500, leaving others uncategorized.",
+            "The query is missing a `HAVING` clause to filter the `SUM(cp.purchase_amount)` before categorization."
           ],
-          "correct_answer": "SELECT user_id, activity_type, activity_timestamp FROM (SELECT user_id, activity_type, activity_timestamp, ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY activity_timestamp DESC) as rn FROM user_activity) AS ranked_activity WHERE rn = 1;",
-          "explanation": "Option 1 uses the `ROW_NUMBER()` window function. It partitions the data by `user_id` and orders activities within each partition by `activity_timestamp` in descending order. This assigns a rank (`rn`) of 1 to the most recent activity for each user. Filtering `WHERE rn = 1` then selects exactly one row per user, which is the most recent. Option 2 correctly finds the MAX timestamp but cannot retrieve the corresponding `activity_type` without another join or subquery, and standard SQL doesn't allow selecting non-aggregated columns not in the GROUP BY clause. Option 3 might return multiple rows per user if they have the same latest timestamp and different activity types. Option 4 only returns the single most recent activity across all users, not per user.",
+          "correct_answer": "The query will correctly categorize customers based on their total spending into 'High Spender', 'Medium Spender', and 'Low Spender'.",
+          "explanation": "This query correctly uses the `CASE` statement within the `SELECT` clause after the `GROUP BY` aggregation. The `SUM(cp.purchase_amount)` calculates the total spending for each `customer_id`. The `CASE` statement then evaluates this aggregated sum to assign the appropriate `spending_category`. The conditions are mutually exclusive and cover all possible total spending ranges, ensuring every customer is categorized. No error will occur, and a `HAVING` clause is not needed for categorization, only for filtering groups.",
           "image_path": null
         },
         {
           "id": "sql_moderate_q5",
           "difficulty": "Moderate",
-          "text": "You are given a table `product_reviews` with columns `review_id`, `product_id`, `rating` (1-5), and `review_text`. You need to calculate the average rating for each product, but exclude reviews with a rating of 1 (as they might be spam). Also, ensure that products with no valid reviews (after excluding rating 1) are still listed with an average rating of 0. Which query achieves this?",
+          "text": "Consider a table `UserActivity` with columns `user_id`, `activity_type` (e.g., 'login', 'purchase', 'view_product'), and `activity_date`. You want to identify users who performed both a 'login' and a 'purchase' activity on the same day.\n\nWhich of the following queries achieves this goal?\n\n```sql\n-- Option A\nSELECT\n    ua.user_id\nFROM\n    UserActivity AS ua\nWHERE\n    ua.activity_type = 'login'\n    AND ua.activity_type = 'purchase'\nGROUP BY\n    ua.user_id;\n\n-- Option B\nSELECT DISTINCT\n    ua1.user_id\nFROM\n    UserActivity AS ua1\nJOIN\n    UserActivity AS ua2 ON ua1.user_id = ua2.user_id\nWHERE\n    ua1.activity_type = 'login'\n    AND ua2.activity_type = 'purchase'\n    AND ua1.activity_date = ua2.activity_date;\n\n-- Option C\nSELECT\n    user_id\nFROM\n    UserActivity\nWHERE\n    activity_type IN ('login', 'purchase')\nGROUP BY\n    user_id\nHAVING\n    COUNT(DISTINCT activity_type) = 2;\n\n-- Option D\nSELECT\n    user_id\nFROM\n    UserActivity\nGROUP BY\n    user_id, activity_date\nHAVING\n    COUNT(CASE WHEN activity_type = 'login' THEN 1 END) > 0\n    AND COUNT(CASE WHEN activity_type = 'purchase' THEN 1 END) > 0;\n```",
           "options": [
-            "SELECT product_id, COALESCE(AVG(CASE WHEN rating <> 1 THEN rating ELSE NULL END), 0) AS average_rating FROM product_reviews GROUP BY product_id;",
-            "SELECT product_id, AVG(rating) FROM product_reviews WHERE rating <> 1 GROUP BY product_id HAVING COUNT(review_id) > 0;",
-            "SELECT product_id, AVG(CASE WHEN rating <> 1 THEN rating END) AS average_rating FROM product_reviews GROUP BY product_id HAVING COUNT(CASE WHEN rating <> 1 THEN 1 END) > 0;",
-            "SELECT product_id, COALESCE(AVG(rating), 0) FROM product_reviews WHERE rating <> 1 GROUP BY product_id;"
+            "Option A",
+            "Option B",
+            "Option C",
+            "Option D"
           ],
-          "correct_answer": "SELECT product_id, COALESCE(AVG(CASE WHEN rating <> 1 THEN rating ELSE NULL END), 0) AS average_rating FROM product_reviews GROUP BY product_id;",
-          "explanation": "Option 1 correctly uses `GROUP BY product_id`. The `CASE` statement ensures that only ratings not equal to 1 are considered in the average calculation (`ELSE NULL` effectively ignores ratings of 1). `COALESCE(..., 0)` then handles products that might have only had ratings of 1 (or no reviews at all after filtering), ensuring their average rating is displayed as 0 instead of NULL. Option 2 filters out products with no valid reviews in the `HAVING` clause, and doesn't handle the NULL output for products with only rating 1. Option 3 uses `HAVING COUNT(CASE WHEN rating <> 1 THEN 1 END) > 0` which correctly filters out products with no valid reviews, but it doesn't handle the case where a product has *only* ratings of 1 (which would result in NULL average if not for COALESCE). Option 4 filters out ratings of 1 using `WHERE`, but `AVG(rating)` would still calculate the average based on the filtered rows, and it doesn't use `COALESCE` to handle products that might have had all their reviews filtered out, potentially resulting in NULLs.",
+          "correct_answer": "Option D",
+          "explanation": "Option D correctly identifies users who performed both activities on the same day. It groups by both `user_id` and `activity_date`. Within each `user_id`/`activity_date` group, it uses conditional `COUNT` (or `SUM`) to check if both 'login' and 'purchase' activities occurred. The `CASE WHEN ... THEN 1 END` evaluates to 1 for matching activities and `NULL` otherwise. `COUNT()` ignores `NULL`s, so `COUNT(...) > 0` effectively checks for the presence of at least one 'login' and one 'purchase' activity within that `user_id` and `activity_date` group.\n\nOption A is incorrect because `activity_type` cannot be both 'login' and 'purchase' simultaneously in a single row.\n\nOption B correctly uses a self-join to find users with both activities on the same date, but the question asks 'Which of the following queries', and Option D is also a valid and often more performant approach, especially with large datasets, as it avoids a self-join that might lead to many intermediate rows.\n\nOption C is incorrect because it groups only by `user_id`. While `COUNT(DISTINCT activity_type) = 2` would identify users who performed both activities *at some point*, it doesn't guarantee they occurred on the *same day*.",
           "image_path": null
         },
         {
           "id": "sql_moderate_q6",
           "difficulty": "Moderate",
-          "text": "You have a table `website_visits` with columns `visit_id`, `user_id`, `visit_timestamp`, and `page_url`. You need to find the number of unique users who visited the '/checkout' page on each day. Assume `visit_timestamp` is a timestamp data type. Which query correctly calculates this?",
+          "text": "You have a table `Sales` with columns `sale_id`, `sale_date`, and `amount`. You need to calculate the total sales amount for each month in the year 2023.\n\nWhich of the following queries would achieve this, assuming a SQL dialect that supports `DATE_TRUNC` (like PostgreSQL) or similar date manipulation functions?\n\n```sql\nSELECT\n    DATE_TRUNC('month', sale_date) AS sales_month,\n    SUM(amount) AS total_monthly_sales\nFROM\n    Sales\nWHERE\n    EXTRACT(YEAR FROM sale_date) = 2023\nGROUP BY\n    sales_month\nORDER BY\n    sales_month;\n```",
           "options": [
-            "SELECT DATE(visit_timestamp) AS visit_date, COUNT(DISTINCT user_id) AS unique_users FROM website_visits WHERE page_url = '/checkout' GROUP BY DATE(visit_timestamp) ORDER BY visit_date;",
-            "SELECT visit_date, COUNT(user_id) FROM (SELECT DATE(visit_timestamp) AS visit_date, user_id FROM website_visits WHERE page_url = '/checkout') AS daily_visits GROUP BY visit_date ORDER BY visit_date;",
-            "SELECT DATE(visit_timestamp) AS visit_date, COUNT(DISTINCT user_id) FROM website_visits WHERE page_url = '/checkout' GROUP BY visit_date ORDER BY visit_date;",
-            "SELECT DATE(visit_timestamp) AS visit_date, COUNT(user_id) FROM website_visits WHERE page_url = '/checkout' GROUP BY DATE(visit_timestamp) HAVING COUNT(DISTINCT user_id) > 0 ORDER BY visit_date;"
+            "The query will return an error because `DATE_TRUNC` is not a standard SQL function.",
+            "The query will calculate the total sales for each day in 2023, not each month.",
+            "The query will correctly calculate the total sales amount for each month in 2023, returning the first day of each month as `sales_month`.",
+            "The `GROUP BY` clause should use `EXTRACT(MONTH FROM sale_date)` instead of `sales_month`."
           ],
-          "correct_answer": "SELECT DATE(visit_timestamp) AS visit_date, COUNT(DISTINCT user_id) AS unique_users FROM website_visits WHERE page_url = '/checkout' GROUP BY DATE(visit_timestamp) ORDER BY visit_date;",
-          "explanation": "Option 1 correctly extracts the date part from `visit_timestamp` using `DATE(visit_timestamp)`, filters for the '/checkout' page using `WHERE page_url = '/checkout'`, and then counts the `DISTINCT user_id` for each date using `COUNT(DISTINCT user_id)` and `GROUP BY DATE(visit_timestamp)`. The `ORDER BY` clause is also appropriate. Option 2 correctly extracts the date and filters but uses `COUNT(user_id)` instead of `COUNT(DISTINCT user_id)`, which would count total visits by users, not unique users. Option 3 is identical to Option 1 except it omits the alias `AS unique_users` for the count, which is a minor stylistic difference but functionally correct. However, Option 1 is slightly more descriptive. Option 4 uses a `HAVING` clause unnecessarily; the `WHERE` clause already ensures we only consider visits to '/checkout', and `COUNT(DISTINCT user_id)` will correctly return 0 if no distinct users are found for a given date, so filtering `HAVING COUNT(DISTINCT user_id) > 0` is redundant and could exclude days with zero unique visitors if not handled carefully.",
+          "correct_answer": "The query will correctly calculate the total sales amount for each month in 2023, returning the first day of each month as `sales_month`.",
+          "explanation": "The query correctly uses `DATE_TRUNC('month', sale_date)` to truncate each `sale_date` to the first day of its respective month. This effectively groups all sales within the same month together. The `WHERE EXTRACT(YEAR FROM sale_date) = 2023` clause filters the data to only include sales from the year 2023. Finally, `SUM(amount)` aggregates the sales for each `sales_month`. While `DATE_TRUNC` is not ANSI standard, it's widely supported in modern SQL databases like PostgreSQL, Redshift, and others (e.g., MySQL has `DATE_FORMAT('%Y-%m-01', sale_date)`, SQL Server has `DATEADD(month, DATEDIFF(month, 0, sale_date), 0)`).",
           "image_path": null
         },
         {
           "id": "sql_moderate_q7",
           "difficulty": "Moderate",
-          "text": "You have a table `sensor_readings` with columns `sensor_id`, `reading_time`, and `value`. You need to find the difference between the maximum and minimum sensor `value` for each `sensor_id` over the entire history. If a sensor has only one reading, the difference should be 0. Which query correctly computes this?",
+          "text": "You have a table `ExperimentResults` with columns `experiment_id`, `variant`, `total_users`, and `converted_users`. You want to calculate the conversion rate for each variant, but need to handle cases where `total_users` might be zero to avoid division-by-zero errors.\n\nWhich of the following SQL queries correctly calculates the conversion rate while handling potential division by zero?\n\n```sql\nSELECT\n    experiment_id,\n    variant,\n    CAST(converted_users AS DECIMAL) / NULLIF(total_users, 0) AS conversion_rate\nFROM\n    ExperimentResults;\n```",
           "options": [
-            "SELECT sensor_id, (MAX(value) - MIN(value)) AS value_range FROM sensor_readings GROUP BY sensor_id;",
-            "SELECT sensor_id, IF(COUNT(value) > 1, MAX(value) - MIN(value), 0) AS value_range FROM sensor_readings GROUP BY sensor_id;",
-            "SELECT sensor_id, COALESCE(MAX(value) - MIN(value), 0) AS value_range FROM sensor_readings GROUP BY sensor_id;",
-            "SELECT sensor_id, (MAX(value) - MIN(value)) FROM sensor_readings WHERE COUNT(value) > 1 GROUP BY sensor_id;"
+            "The query will return an error if `total_users` is 0, as `NULLIF` only works with `NULL` values.",
+            "The query will correctly calculate the conversion rate, returning `NULL` for `conversion_rate` if `total_users` is 0.",
+            "The query will always return 0 for `conversion_rate` if `total_users` is 0.",
+            "The `CAST` to `DECIMAL` is unnecessary and will cause a type mismatch error."
           ],
-          "correct_answer": "SELECT sensor_id, (MAX(value) - MIN(value)) AS value_range FROM sensor_readings GROUP BY sensor_id;",
-          "explanation": "Option 1 is the correct and most straightforward query. For each `sensor_id` group, `MAX(value)` finds the highest reading and `MIN(value)` finds the lowest. Subtracting them gives the range. If a sensor has only one reading, `MAX(value)` and `MIN(value)` will be the same, resulting in a difference of 0, fulfilling the requirement. Option 2 uses an `IF` condition, which is often specific to certain SQL dialects and less standard than the behavior of MAX/MIN on single-row groups. While it might work, Option 1 is more universally applicable and simpler. Option 3 uses `COALESCE`, which is intended for handling NULLs. The difference `MAX(value) - MIN(value)` will not be NULL if there's at least one row; it will be 0 if there's only one row. Option 4 incorrectly tries to use `COUNT(value)` in a `WHERE` clause, which is not allowed for aggregate functions; `HAVING` should be used instead, and even then, the logic for single readings is not handled as elegantly as in Option 1.",
+          "correct_answer": "The query will correctly calculate the conversion rate, returning `NULL` for `conversion_rate` if `total_users` is 0.",
+          "explanation": "The `NULLIF(total_users, 0)` function returns `NULL` if `total_users` is equal to 0; otherwise, it returns the value of `total_users`. When `NULL` is used as a divisor in a division operation, the result is `NULL`, effectively preventing a division-by-zero error. The `CAST(converted_users AS DECIMAL)` ensures that the division performs floating-point arithmetic rather than integer division, providing a precise conversion rate.",
           "image_path": null
         },
         {
           "id": "sql_moderate_q8",
           "difficulty": "Moderate",
-          "text": "You are working with a table `transactions` containing `transaction_id`, `user_id`, `transaction_date`, and `amount`. You need to find the running total of transaction amounts for each user, ordered by `transaction_date`. The output should include `user_id`, `transaction_date`, `amount`, and the `running_total`. Which SQL query correctly generates this?",
+          "text": "You are given three tables: `Customers` (`customer_id`, `customer_name`, `region_id`), `Regions` (`region_id`, `region_name`), and `Orders` (`order_id`, `customer_id`, `order_date`, `total_amount`).\n\nYour task is to find the names of customers from the 'North' region who have placed more than 3 orders.\n\nWhich of the following SQL queries correctly identifies these customers?\n\n```sql\nSELECT\n    c.customer_name\nFROM\n    Customers AS c\nJOIN\n    Regions AS r ON c.region_id = r.region_id\nJOIN\n    Orders AS o ON c.customer_id = o.customer_id\nWHERE\n    r.region_name = 'North'\nGROUP BY\n    c.customer_name\nHAVING\n    COUNT(o.order_id) > 3;\n```",
           "options": [
-            "SELECT user_id, transaction_date, amount, SUM(amount) OVER (PARTITION BY user_id ORDER BY transaction_date) AS running_total FROM transactions ORDER BY user_id, transaction_date;",
-            "SELECT user_id, transaction_date, amount, SUM(amount) OVER (ORDER BY transaction_date) AS running_total FROM transactions GROUP BY user_id, transaction_date, amount ORDER BY user_id, transaction_date;",
-            "SELECT user_id, transaction_date, amount, AVG(amount) OVER (PARTITION BY user_id ORDER BY transaction_date) AS running_total FROM transactions ORDER BY user_id, transaction_date;",
-            "SELECT user_id, transaction_date, amount, SUM(amount) OVER (PARTITION BY user_id) AS running_total FROM transactions ORDER BY user_id, transaction_date;"
+            "The query will return an error because `COUNT(o.order_id)` cannot be used in `HAVING` after a `JOIN`.",
+            "The query will correctly list the names of customers from the 'North' region who have placed more than 3 orders.",
+            "The query will count all orders for customers from the 'North' region, regardless of which region the customer is actually from.",
+            "The query will only include customers who have placed exactly 3 orders."
           ],
-          "correct_answer": "SELECT user_id, transaction_date, amount, SUM(amount) OVER (PARTITION BY user_id ORDER BY transaction_date) AS running_total FROM transactions ORDER BY user_id, transaction_date;",
-          "explanation": "Option 1 correctly uses the `SUM()` window function with an `OVER` clause. `PARTITION BY user_id` ensures the running total is calculated independently for each user. `ORDER BY transaction_date` within the `OVER` clause specifies the order in which the amounts are summed for the running total. The final `ORDER BY` clause sorts the entire result set for readability. Option 2 incorrectly uses `GROUP BY` with a window function and omits the `PARTITION BY user_id`, leading to an overall running total instead of per user. Option 3 uses `AVG()` instead of `SUM()`, calculating a running average, not a running total. Option 4 correctly partitions by `user_id` but omits the `ORDER BY transaction_date` within the `OVER` clause, which would calculate the total sum of amounts for each user, not a running total.",
+          "correct_answer": "The query will correctly list the names of customers from the 'North' region who have placed more than 3 orders.",
+          "explanation": "This query correctly uses multiple `JOIN` clauses to link `Customers` with `Regions` (to filter by `region_name`) and `Customers` with `Orders` (to count orders). The `WHERE r.region_name = 'North'` clause filters the data to include only customers from the 'North' region before aggregation. Then, `GROUP BY c.customer_name` aggregates the results by customer, and `HAVING COUNT(o.order_id) > 3` filters these grouped customers to only include those who have more than 3 orders. This combination of `JOIN`s, `WHERE`, `GROUP BY`, and `HAVING` correctly addresses the problem.",
           "image_path": null
         }
       ],
@@ -256,71 +256,71 @@
         {
           "id": "sql_advanced_q1",
           "difficulty": "Advanced",
-          "text": "You are cleaning a web clickstream dataset to find the first valid interaction per user session. The raw table `raw_clicks` contains duplicate events due to client-side retries. You execute the following query: ```sql\nWITH cleaned_clicks AS\n  (SELECT TRIM(LOWER(session_id)) AS clean_session,\n          CAST(click_timestamp AS TIMESTAMP) AS event_time,\n          COALESCE(NULLIF(TRIM(event_type), ''), 'UNKNOWN') AS clean_event,\n          ROW_NUMBER() OVER (PARTITION BY TRIM(LOWER(session_id))\n                             ORDER BY CAST(click_timestamp AS TIMESTAMP) ASC) AS rn\n   FROM raw_clicks\n   WHERE session_id IS NOT NULL\n     AND click_timestamp IS NOT NULL\n     AND TRIM(session_id) != '')\nSELECT clean_session,\n       event_time,\n       clean_event\nFROM cleaned_clicks\nWHERE rn = 1\n  AND clean_event != 'UNKNOWN';\n``` What is the precise behavior of this query when processing a session containing exactly two rows: Row A with `session_id = '  S100 '`, `click_timestamp = '2023-10-01 10:00:00'`, and `event_type = ' '` (empty spaces); and Row B with `session_id = 's100'`, `click_timestamp = '2023-10-01 10:05:00'`, and `event_type = 'CLICK'`?",
+          "text": "Consider the following SQL query designed to partition user clicks into sessions where inactivity exceeds 30 minutes:\n\n```sql\nWITH session_flags AS (\n    SELECT\n        user_id,\n        click_time,\n        CASE\n            WHEN click_time - LAG(click_time) OVER (PARTITION BY user_id ORDER BY click_time) > INTERVAL '30 minutes' THEN 1\n            ELSE 0\n        END AS is_new_session\n    FROM user_clicks\n)\nSELECT\n    user_id,\n    click_time,\n    SUM(is_new_session) OVER (PARTITION BY user_id ORDER BY click_time) AS session_id\nFROM session_flags;\n```\n\nIf a user has multiple clicks with the exact same `click_time` (e.g., due to rapid concurrent API requests or millisecond truncation), how does the default window frame specification of the `SUM` window function affect the `session_id` calculation compared to using `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW`?",
           "options": [
-            "It returns nothing (zero rows) for this session because Row A is deduplicated as the first row (`rn = 1`) but filtered out by the `clean_event != 'UNKNOWN'` clause.",
-            "It returns one row: `clean_session = 's100'`, `event_time = '2023-10-01 10:05:00'`, and `clean_event = 'CLICK'`.",
-            "It returns two rows because the case-sensitivity in the original `session_id` prevents them from partitioning together.",
-            "It returns one row: `clean_session = 's100'`, `event_time = '2023-10-01 10:00:00'`, and `clean_event = 'UNKNOWN'`."
+            "The default frame is RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, which treats duplicate timestamps as peers. It evaluates the cumulative sum of is_new_session for all duplicate rows at once, giving them the same session_id, which includes the flags of both rows.",
+            "The default frame is ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, so there is no behavioral difference; duplicate timestamps are ordered arbitrarily but resolved sequentially.",
+            "The query will fail at runtime because standard ANSI SQL does not allow the use of SUM with an ORDER BY clause without an explicit ROWS frame.",
+            "The default RANGE frame will cause the database to omit the second duplicate row from the cumulative sum, resulting in a NULL session_id for the second duplicate row."
           ],
-          "correct_answer": "It returns nothing (zero rows) for this session because Row A is deduplicated as the first row (`rn = 1`) but filtered out by the `clean_event != 'UNKNOWN'` clause.",
-          "explanation": "The query partitions by `TRIM(LOWER(session_id))`. Both `'  S100 '` and `'s100'` normalize to `'s100'`, so they belong to the same partition. The `ROW_NUMBER()` function orders by `event_time` ascending. Row A (`10:00:00`) is earlier than Row B (`10:05:00`), so Row A is assigned `rn = 1`. For Row A, `event_type` is `' '`. `TRIM(event_type)` yields `''`. `NULLIF('', '')` returns `NULL`. `COALESCE(NULL, 'UNKNOWN')` evaluates to `'UNKNOWN'`. The outer query filters `WHERE rn = 1 AND clean_event != 'UNKNOWN'`. Since Row A has `rn = 1` and `clean_event = 'UNKNOWN'`, it is filtered out. Row B has `rn = 2`, so it is also excluded. Thus, zero rows are returned for this session.",
+          "correct_answer": "The default frame is RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW, which treats duplicate timestamps as peers. It evaluates the cumulative sum of is_new_session for all duplicate rows at once, giving them the same session_id, which includes the flags of both rows.",
+          "explanation": "In standard ANSI SQL, when an `ORDER BY` clause is specified within a window function (like `SUM`) without an explicit frame clause, the default frame is `RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` (not `ROWS`). \n\nUnder `RANGE`, rows with identical values in the ordering column (`click_time` in this case) are treated as \"peers\" and are processed as a single group. This means the cumulative `SUM` will include the `is_new_session` values for *all* peer rows simultaneously, assigning the exact same accumulated `session_id` to both. \n\nIf `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` were used, the engine would process the duplicates sequentially based on physical storage or arbitrary order, potentially assigning different `session_id` values if one of the duplicate rows was evaluated as starting a new session.",
           "image_path": null
         },
         {
           "id": "sql_advanced_q2",
           "difficulty": "Advanced",
-          "text": "You are cleaning a messy product catalog to calculate the ratio of valid, non-null, non-placeholder product SKUs to total products per category. You execute the following query: ```sql\nSELECT UPPER(TRIM(category)) AS clean_category,\n       COUNT(*) AS total_count,\n       COUNT(NULLIF(REPLACE(UPPER(TRIM(sku)), 'N/A', ''), '')) AS valid_sku_count,\n       CAST(COUNT(NULLIF(REPLACE(UPPER(TRIM(sku)), 'N/A', ''), '')) AS DOUBLE PRECISION) / NULLIF(COUNT(*), 0) AS valid_ratio\nFROM product_catalog\nWHERE category IS NOT NULL\n  AND TRIM(category) != ''\nGROUP BY UPPER(TRIM(category));\n``` If a category `'Electronics'` has 4 records with the following `sku` values: `'  '`, `'N/A'`, `'sku123'`, and `NULL`, what are the values of `total_count`, `valid_sku_count`, and `valid_ratio` returned by the query?",
+          "text": "Given the following tables representing stock purchases (`buys`) and a single matching sale order of 150 units, analyze the query designed to determine the total cost of goods sold (COGS) using First-In, First-Out (FIFO) allocation:\n\n```sql\nWITH running_totals AS (\n    SELECT\n        buy_id,\n        quantity,\n        price_per_unit,\n        SUM(quantity) OVER (ORDER BY buy_date) AS cumulative_qty,\n        SUM(quantity) OVER (ORDER BY buy_date) - quantity AS prev_cumulative_qty\n    FROM buys\n)\nSELECT\n    SUM(\n        CASE\n            WHEN 150 >= cumulative_qty THEN quantity * price_per_unit\n            WHEN 150 > prev_cumulative_qty THEN (150 - prev_cumulative_qty) * price_per_unit\n            ELSE 0\n        END\n    ) AS total_cogs\nFROM running_totals;\n```\n\nAssume the `buys` table contains:\n* `buy_id = 1`, `quantity = 100`, `price_per_unit = 10.00`\n* `buy_id = 2`, `quantity = 100`, `price_per_unit = 12.00`\n\nWhat is the result of this query, and why?",
           "options": [
-            "`total_count = 4`, `valid_sku_count = 1`, `valid_ratio = 0.25`",
-            "`total_count = 4`, `valid_sku_count = 2`, `valid_ratio = 0.50`",
-            "`total_count = 3`, `valid_sku_count = 1`, `valid_ratio = 0.33`",
-            "`total_count = 4`, `valid_sku_count = 0`, `valid_ratio = 0.00`"
+            "It returns 1600.00. For buy_id 1, the entire 100 units are included ($1000.00$). For buy_id 2, only 50 units are included ($600.00$) because 150 falls between prev_cumulative_qty (100) and cumulative_qty (200).",
+            "It returns 1800.00 because the query fails to cap the second transaction properly, applying the price of 12.00 to the entire 100 units of the second transaction.",
+            "It returns NULL because prev_cumulative_qty for the first row evaluates to NULL, which propagates through the CASE statement and invalidates the sum.",
+            "It returns 1500.00 because the CASE statement evaluates the first transaction's cumulative quantity as equal to 100, which skips the first WHEN clause."
           ],
-          "correct_answer": "`total_count = 4`, `valid_sku_count = 1`, `valid_ratio = 0.25`",
-          "explanation": "The `COUNT(*)` function counts all rows in the group, which is 4. For the `sku` values: 1) `'  '` is trimmed to `''`, replaced to `''`, and `NULLIF('', '')` returns `NULL`. 2) `'N/A'` is trimmed and uppercased to `'N/A'`, replaced with `''` via `REPLACE`, and `NULLIF('', '')` returns `NULL`. 3) `'sku123'` is trimmed and uppercased to `'SKU123'`, replaced to `'SKU123'`, and `NULLIF('SKU123', '')` returns `'SKU123'`. 4) `NULL` remains `NULL` throughout. `COUNT(column)` only counts non-null values, so `valid_sku_count` is 1. The `valid_ratio` is calculated as $1.0 / 4 = 0.25$.",
+          "correct_answer": "It returns 1600.00. For buy_id 1, the entire 100 units are included ($1000.00$). For buy_id 2, only 50 units are included ($600.00$) because 150 falls between prev_cumulative_qty (100) and cumulative_qty (200).",
+          "explanation": "Let's trace the query execution:\n\nFor `buy_id = 1`:\n* `quantity` = 100, `price_per_unit` = 10.00\n* `cumulative_qty` = 100\n* `prev_cumulative_qty` = $100 - 100 = 0$\n* `CASE` evaluation: `150 >= 100` is `TRUE`. It returns `100 * 10.00 = 1000.00`.\n\nFor `buy_id = 2`:\n* `quantity` = 100, `price_per_unit` = 12.00\n* `cumulative_qty` = 200\n* `prev_cumulative_qty` = $200 - 100 = 100$\n* `CASE` evaluation: `150 >= 200` is `FALSE`. Next, `150 > 100` is `TRUE`. It returns `(150 - 100) * 12.00 = 50 * 12.00 = 600.00`.\n\nThe sum of these is $1000.00 + 600.00 = 1600.00$. This is a highly efficient and mathematically sound way to calculate FIFO inventory consumption using window functions without loops or cursors.",
           "image_path": null
         },
         {
           "id": "sql_advanced_q3",
           "difficulty": "Advanced",
-          "text": "You are processing IoT sensor logs and need to extract the latest valid temperature reading per sensor. You must prioritize rows with valid numeric data over rows with missing or empty values. You execute the following query: ```sql\nWITH parsed_logs AS\n  (SELECT sensor_id,\n          CAST(NULLIF(TRIM(temperature), '') AS DOUBLE PRECISION) AS temp_val,\n          CAST(log_timestamp AS TIMESTAMP) AS ts,\n          ROW_NUMBER() OVER (PARTITION BY sensor_id\n                             ORDER BY CASE\n                                          WHEN NULLIF(TRIM(temperature), '') IS NULL THEN 1\n                                          ELSE 0\n                                      END ASC, CAST(log_timestamp AS TIMESTAMP) DESC) AS rn\n   FROM sensor_logs\n   WHERE sensor_id IS NOT NULL\n     AND TRIM(sensor_id) != '')\nSELECT sensor_id,\n       temp_val,\n       ts\nFROM parsed_logs\nWHERE rn = 1;\n``` How does the `ORDER BY` clause inside the `ROW_NUMBER()` window function handle a mix of valid temperature readings and null/empty temperature readings for the same `sensor_id`?",
+          "text": "Consider the following two queries designed to find the latest status change for each user in an audit log:\n\nQuery A:\n```sql\nSELECT\n    user_id,\n    status,\n    changed_at\nFROM audit_logs a\nWHERE changed_at = (\n    SELECT MAX(changed_at)\n    FROM audit_logs b\n    WHERE a.user_id = b.user_id\n);\n```\n\nQuery B:\n```sql\nSELECT\n    user_id,\n    status,\n    changed_at\nFROM (\n    SELECT\n        user_id,\n        status,\n        changed_at,\n        ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY changed_at DESC) AS rn\n    FROM audit_logs\n) t\nWHERE rn = 1;\n```\n\nAssuming `changed_at` is NOT unique per user (i.e., a user can have multiple log entries with the exact same maximum timestamp), how do the results of Query A and Query B differ, and what are the performance implications if there is a composite index on `(user_id, changed_at DESC)`?",
           "options": [
-            "It prioritizes rows with valid (non-null, non-empty) temperature values first, and then orders those valid rows by timestamp descending to get the latest reading.",
-            "It prioritizes rows with null or empty temperature values first, and then orders them by timestamp descending.",
-            "It partitions the data into two separate window groups per sensor: one for nulls and one for non-nulls.",
-            "It throws a runtime casting error because `DOUBLE PRECISION` cannot be compared with the conditional `CASE` expression."
+            "Query A can return multiple rows per user if there are duplicate maximum timestamps, whereas Query B will always return exactly one row per user. Query A can utilize the composite index efficiently via index-seek inside the subquery, while Query B requires scanning the partition.",
+            "Query A and Query B will return identical result sets under all circumstances. Query B is always faster because window functions do not require self-joins and can execute in $O(N)$ time utilizing the index.",
+            "Query A will return fewer rows than Query B because the correlated subquery collapses duplicates automatically. Query A is slower because correlated subqueries must execute a full table scan for every outer row.",
+            "Query B will return multiple rows per user because ROW_NUMBER() does not break ties, whereas Query A will return exactly one row per user because MAX() forces a single scalar output."
           ],
-          "correct_answer": "It prioritizes rows with valid (non-null, non-empty) temperature values first, and then orders those valid rows by timestamp descending to get the latest reading.",
-          "explanation": "The `CASE` expression evaluates to `1` if the trimmed temperature is null or empty, and `0` if it contains a value. Sorting this expression in ascending (`ASC`) order ensures that all rows with valid temperatures (evaluating to `0`) are ordered before rows with missing temperatures (evaluating to `1`). Within each group, the query then sorts by `CAST(log_timestamp AS TIMESTAMP) DESC` to find the latest reading. This guarantees that the latest valid reading is assigned `rn = 1`.",
+          "correct_answer": "Query A can return multiple rows per user if there are duplicate maximum timestamps, whereas Query B will always return exactly one row per user. Query A can utilize the composite index efficiently via index-seek inside the subquery, while Query B requires scanning the partition.",
+          "explanation": "Query A uses a correlated subquery checking `changed_at = (SELECT MAX...)`. If two rows share the same maximum `changed_at` for a user, both will satisfy the condition, returning multiple rows for that user. Query B uses `ROW_NUMBER()`, which always assigns distinct sequential integers starting from 1, so `rn = 1` guarantees exactly one row per user, breaking ties arbitrarily.\n\nRegarding performance: with a composite index on `(user_id, changed_at DESC)`, Query A can perform a highly efficient index seek for each outer row (especially if the outer query is filtered). Query B can also utilize the index to avoid a sort, but it must scan the index to compute `ROW_NUMBER()` across all partitions.",
           "image_path": null
         },
         {
           "id": "sql_advanced_q4",
           "difficulty": "Advanced",
-          "text": "You are parsing and cleaning user-submitted phone numbers to extract country codes. You execute the following query: ```sql\nSELECT user_id,\n       raw_phone,\n       COALESCE(NULLIF(REGEXP_REPLACE(TRIM(raw_phone), '[^0-9]', '', 'g'), ''), '0000000000') AS cleaned_digits,\n       CAST(CASE\n                WHEN LENGTH(COALESCE(NULLIF(REGEXP_REPLACE(TRIM(raw_phone), '[^0-9]', '', 'g'), ''), '0000000000')) > 10 THEN LEFT(COALESCE(NULLIF(REGEXP_REPLACE(TRIM(raw_phone), '[^0-9]', '', 'g'), ''), '0000000000'), 3)\n                ELSE '001'\n            END AS INTEGER) AS country_code_numeric\nFROM user_profiles;\n``` If a user profile has a `raw_phone` value of `' +1 (555) 019-2834 '`, what are the outputs for `cleaned_digits` and `country_code_numeric`?",
+          "text": "Consider the following recursive CTE designed to traverse a bill of materials (BOM) to calculate the total quantity of sub-components needed to build a final product (Product ID 101):\n\n```sql\nWITH RECURSIVE bom_explosion AS (\n    SELECT\n        component_id,\n        quantity,\n        1 AS depth\n    FROM bill_of_materials\n    WHERE assembly_id = 101\n\n    UNION ALL\n\n    SELECT\n        bom.component_id,\n        bom.quantity * exp.quantity,\n        exp.depth + 1\n    FROM bill_of_materials bom\n    INNER JOIN bom_explosion exp ON bom.assembly_id = exp.component_id\n    WHERE exp.depth < 10\n)\nSELECT\n    component_id,\n    SUM(quantity) AS total_qty\nFROM bom_explosion\nGROUP BY component_id;\n```\n\nIf the `bill_of_materials` table contains a circular dependency (e.g., Component A requires Component B, which in turn requires Component A), what is the behavior of this query, and how can it be modified to prevent infinite loops while still returning correct results?",
           "options": [
-            "`cleaned_digits = '15550192834'`, `country_code_numeric = 155`",
-            "`cleaned_digits = '15550192834'`, `country_code_numeric = 1`",
-            "`cleaned_digits = '5550192834'`, `country_code_numeric = 1`",
-            "`cleaned_digits = '0000000000'`, `country_code_numeric = 1`"
+            "The query will loop up to 10 levels deep due to the depth guard and then terminate, returning incorrect inflated quantities. To prevent this safely, we can track visited paths in an array using ARRAY[component_id] and check WHERE NOT component_id = ANY(visited_path).",
+            "The query will crash immediately with a stack overflow error because SQL engines do not allow recursive joins on the same table without a declared foreign key.",
+            "The query will run infinitely because recursive CTEs ignore the WHERE clause in the recursive member when evaluating termination conditions.",
+            "The SUM(quantity) aggregation will automatically detect circular loops and raise a division-by-zero exception to abort execution."
           ],
-          "correct_answer": "`cleaned_digits = '15550192834'`, `country_code_numeric = 155`",
-          "explanation": "First, `TRIM(raw_phone)` removes leading/trailing spaces, resulting in `'+1 (555) 019-2834'`. The `REGEXP_REPLACE` function with pattern `'[^0-9]'` removes all non-numeric characters, yielding `'15550192834'`. Since this is not empty, `NULLIF` does not return null, and `COALESCE` returns `'15550192834'`. The length of this string is 11, which is greater than 10. The `LEFT` function extracts the first 3 characters, `'155'`. Finally, `CAST('155' AS INTEGER)` converts the string to the integer `155`.",
+          "correct_answer": "The query will loop up to 10 levels deep due to the depth guard and then terminate, returning incorrect inflated quantities. To prevent this safely, we can track visited paths in an array using ARRAY[component_id] and check WHERE NOT component_id = ANY(visited_path).",
+          "explanation": "The depth-guard (`depth < 10`) halts the recursion at 10 levels, but because there is a cycle, it will inflate the counts up to 10 levels and return those incorrect counts. \n\nTo properly handle and terminate circular paths in graph/tree traversals in standard PostgreSQL/SQL, one can maintain an array of visited nodes (e.g., `ARRAY[assembly_id]` concatenated at each step) and add a filter `WHERE NOT bom.component_id = ANY(exp.visited_path)` to stop traversing as soon as a node is revisited, avoiding infinite loops without arbitrarily capping depth.",
           "image_path": null
         },
         {
           "id": "sql_advanced_q5",
           "difficulty": "Advanced",
-          "text": "You are building a robust data pipeline to deduplicate and clean a `raw_users` table before loading it into a downstream data warehouse. You write the following query: ```sql\nWITH clean_users AS\n  (SELECT CAST(user_id AS INTEGER) AS clean_uid,\n          TRIM(LOWER(email)) AS clean_email,\n          ROW_NUMBER() OVER (PARTITION BY CAST(user_id AS INTEGER)\n                             ORDER BY COALESCE(updated_at, created_at) DESC) AS rn\n   FROM raw_users\n   WHERE user_id IS NOT NULL\n     AND TRIM(user_id) != '')\nSELECT clean_uid,\n       clean_email\nFROM clean_users\nWHERE rn = 1;\n``` If the `raw_users` table contains a row where `user_id = 'USR_1002'`, how will standard PostgreSQL/ANSI SQL handle this query?",
+          "text": "Consider the following SQL query designed to find all users who have not made any transactions:\n\n```sql\nSELECT COUNT(*)\nFROM users\nWHERE user_id NOT IN (\n    SELECT user_id\n    FROM transactions\n);\n```\n\nSuppose the `users` table has 1,000 unique users. The `transactions` table has 500 rows representing transactions from 100 unique users, but it also contains a single row where `user_id` is `NULL` (representing an anonymous guest checkout). What will this query return, and why?",
           "options": [
-            "It will throw a runtime error during the `CAST(user_id AS INTEGER)` operation because the string contains non-numeric characters.",
-            "It will automatically filter out the row and proceed without error because of the `WHERE user_id IS NOT NULL` clause.",
-            "It will cast `'USR_1002'` to `NULL` and group it with other null values.",
-            "It will extract the numeric portion `'1002'` and cast it successfully."
+            "It will return 0. If the subquery returns even a single NULL value, the NOT IN operator evaluates to UNKNOWN for all rows in the outer query, resulting in zero rows being returned.",
+            "It will return 900. SQL automatically filters out NULL values from the subquery result set before evaluating the NOT IN condition.",
+            "It will return 899. It correctly identifies the 900 users without transactions, but subtracts 1 because of the anonymous NULL transaction.",
+            "It will throw a runtime constraint violation error because a subquery used with NOT IN cannot contain NULL values."
           ],
-          "correct_answer": "It will throw a runtime error during the `CAST(user_id AS INTEGER)` operation because the string contains non-numeric characters.",
-          "explanation": "Standard SQL `CAST` is strict. If a string contains non-numeric characters like `'USR_'`, attempting to cast it directly to an `INTEGER` will result in a runtime exception (e.g., 'invalid input syntax for integer'). To prevent this, you would need to use regular expressions to strip non-numeric characters first, or use a safe casting function like `TRY_CAST` (in engines that support it) which returns `NULL` instead of failing.",
+          "correct_answer": "It will return 0. If the subquery returns even a single NULL value, the NOT IN operator evaluates to UNKNOWN for all rows in the outer query, resulting in zero rows being returned.",
+          "explanation": "This is a classic SQL three-valued logic trap. The expression `user_id NOT IN (val1, val2, ..., NULL)` is logically equivalent to:\n\n`user_id <> val1 AND user_id <> val2 AND ... AND user_id <> NULL`\n\nIn SQL, any comparison with `NULL` (such as `user_id <> NULL`) evaluates to `UNKNOWN`. Because of the `AND` operators, if even one term in the chain is `UNKNOWN`, the entire expression evaluates to either `FALSE` or `UNKNOWN` (it can never evaluate to `TRUE`). Since the `WHERE` clause only filters in rows that evaluate to `TRUE`, no rows are returned, and `COUNT(*)` returns `0`.\n\nTo fix this, the subquery must explicitly exclude `NULL` values: `WHERE user_id IS NOT NULL` (or use `NOT EXISTS`).",
           "image_path": null
         }
       ]
