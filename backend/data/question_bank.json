@@ -934,113 +934,113 @@
         {
           "id": "data_visualization_easy_q1",
           "difficulty": "Easy",
-          "text": "You are evaluating a linear regression model's performance and plot the residuals against the fitted values as shown in the image the residual plot shown below. The plot displays a distinct, symmetric U-shaped pattern of residuals centered around the horizontal zero line. What does this pattern in the residuals vs fitted plot indicate about the model's assumptions?",
+          "text": "Consider the following Python code snippet using the Matplotlib library:\n\n```python\nimport matplotlib.pyplot as plt\nfig, ax = plt.subplots()\n```\n\nWhich of the following is the correct way to set the title of the plot when using this object-oriented API (`ax`) rather than the state-based pyplot API (`plt`)?",
           "options": [
-            "The relationship between the independent and dependent variables is non-linear.",
-            "The error terms have non-constant variance (heteroscedasticity).",
-            "The residuals are normally distributed with a mean of zero.",
-            "There is multicollinearity among the independent variables."
+            "ax.set_title(\"My Plot\")",
+            "ax.title(\"My Plot\")",
+            "ax.set_plot_title(\"My Plot\")",
+            "ax.update_title(\"My Plot\")"
           ],
-          "correct_answer": "The relationship between the independent and dependent variables is non-linear.",
-          "explanation": "A systematic pattern (like a U-shape or S-shape) in a residuals vs. fitted values plot indicates that the linear model has failed to capture some non-linear relationship between the predictors and the response variable. If heteroscedasticity were present, we would see a funnel or fan shape where the spread of residuals increases or decreases with the fitted values, not a systematic curve. Normal distribution of residuals is typically checked via a Q-Q plot, and multicollinearity is assessed using Variance Inflation Factor ($VIF$).",
-          "image_path": "residuals_vs_fitted.png"
+          "correct_answer": "ax.set_title(\"My Plot\")",
+          "explanation": "In Matplotlib's object-oriented interface, axes properties are typically modified via explicit setter methods. To set the title of an `Axes` object, the `set_title()` method is used. Conversely, the state-based pyplot interface uses `plt.title()`. Methods like `ax.title()` or `ax.set_plot_title()` do not exist in the Matplotlib API.",
+          "image_path": null
         },
         {
           "id": "data_visualization_easy_q2",
           "difficulty": "Easy",
-          "text": "You are building a dashboard and want to create a $2 \\times 2$ grid of subplots using `matplotlib.pyplot`. You need to plot a distribution on the bottom-right subplot. Consider the following code: ```python\nimport matplotlib.pyplot as plt\nimport seaborn as sns\nfig, axes = plt.subplots(2, 2, figsize=(10, 10))\n``` Which line of code correctly plots a histogram on the bottom-right subplot?",
+          "text": "You are plotting a scatter plot with tens of thousands of data points. Because many points lie on top of one another (overplotting), it is difficult to determine where the data is most dense. Which parameter should you adjust in `sns.scatterplot` or `plt.scatter` to introduce transparency and make dense regions more visible?",
           "options": [
-            "sns.histplot(data=df, x=\"age\", ax=axes[1, 1])",
-            "sns.histplot(data=df, x=\"age\", ax=axes[2, 2])",
-            "sns.histplot(data=df, x=\"age\", ax=axes[1][0])",
-            "sns.histplot(data=df, x=\"age\", ax=axes[0, 1])"
+            "alpha",
+            "opacity",
+            "transparency",
+            "density"
           ],
-          "correct_answer": "sns.histplot(data=df, x=\"age\", ax=axes[1, 1])",
-          "explanation": "In a $2 \\times 2$ grid, the subplots are indexed using 0-based indexing. The top-left is `axes[0, 0]`, top-right is `axes[0, 1]`, bottom-left is `axes[1, 0]`, and bottom-right is `axes[1, 1]`. Using `axes[2, 2]` will result in an `IndexError` because the dimensions are $2 \\times 2$ (valid indices are 0 and 1). `axes[1][0]` refers to the bottom-left subplot, and `axes[0, 1]` refers to the top-right subplot.",
+          "correct_answer": "alpha",
+          "explanation": "The `alpha` parameter controls the transparency of marks in Matplotlib and Seaborn. It accepts values between $0$ (completely transparent) and $1$ (completely opaque). By setting `alpha` to a low value (e.g., `alpha=0.2`), overlapping points accumulate color density, making high-density regions visually stand out.",
           "image_path": null
         },
         {
           "id": "data_visualization_easy_q3",
           "difficulty": "Easy",
-          "text": "You are examining a correlation heatmap of features for a housing price prediction model as shown in `correlation_heatmap.png`. You notice that the cells representing the correlation between `num_rooms` and `total_square_footage` have a value of $0.92$ and are colored in dark blue (representing strong positive correlation). Based on this visualization, what potential issue should you address before training a linear regression model, and how?",
+          "text": "Analyze the confusion matrix heatmap displayed below for a binary classification task where class 0 is negative and class 1 is positive.\n\nWhat is the total number of False Positives (samples where the actual class is 0 but the model predicted 1)?",
           "options": [
-            "Multicollinearity; consider removing one of the highly correlated features or using regularization.",
-            "Heteroscedasticity; apply a log transformation to the target variable.",
-            "Underfitting; add polynomial features for both variables to capture non-linear relationships.",
-            "Data leakage; remove the target variable from the correlation matrix."
+            "10",
+            "5",
+            "50",
+            "35"
           ],
-          "correct_answer": "Multicollinearity; consider removing one of the highly correlated features or using regularization.",
-          "explanation": "A very high correlation coefficient ($0.92$) between two independent variables indicates strong multicollinearity. This can destabilize the coefficient estimates of a linear regression model, making them highly sensitive to small changes in the model. Standard remedies include dropping one of the redundant features or applying regularization techniques like Ridge ($L_2$) or Lasso ($L_1$) regression. Heteroscedasticity, underfitting, and data leakage are not directly diagnosed or solved by identifying high correlation between two independent features.",
-          "image_path": "correlation_heatmap.png"
+          "correct_answer": "10",
+          "explanation": "A confusion matrix displays actual classes along one axis and predicted classes along the other. In the displayed heatmap, the layout corresponds to the following structure:\n\n| Actual \\ Predicted | Predicted 0 | Predicted 1 |\n| --- | --- | --- |\n| **Actual 0** | 50 (True Negative) | 10 (False Positive) |\n| **Actual 1** | 5 (False Negative) | 35 (True Positive) |\n\nFalse Positives occur when the actual class is 0 but the predicted class is 1. Looking at the intersection of Row 0 (Actual 0) and Column 1 (Predicted 1), the count is 10.",
+          "image_path": "dataviz_easy_q3_confusion_matrix.png"
         },
         {
           "id": "data_visualization_easy_q4",
           "difficulty": "Easy",
-          "text": "You are plotting a scatter plot of 500,000 customer transactions using Seaborn's `scatterplot`. The resulting plot is a solid mass of blue, making it impossible to see the density of the points. You want to modify the plot to better visualize density. Which of the following modifications is the most appropriate first step to resolve this overplotting issue while keeping a scatter-like representation?",
+          "text": "You are plotting the distribution of household incomes for a city. The incomes range from 10,000 to 10,000,000, resulting in a highly right-skewed distribution where low-income details are compressed. Which axis scale transformation is most appropriate to spread out the low-income values and make the entire range interpretable?",
           "options": [
-            "Set the `\\alpha` parameter to a small value (e.g., `\\alpha=0.1`) to introduce transparency.",
-            "Change the marker style to a larger size using `s=100` to make individual points stand out.",
-            "Use `sns.lineplot` instead of `sns.scatterplot` to connect all the points sequentially.",
-            "Sort the dataframe by the transaction amount in ascending order before plotting."
+            "ax.set_xscale('log')",
+            "ax.set_xscale('sqrt')",
+            "ax.set_xscale('logit')",
+            "ax.set_xscale('exp')"
           ],
-          "correct_answer": "Set the `alpha` parameter to a small value (e.g., `alpha=0.1`) to introduce transparency.",
-          "explanation": "Setting the `\\alpha` parameter (transparency) allows overlapping points to build up color density, making high-density regions darker and low-density regions lighter. Increasing marker size (`s=100`) would worsen overplotting. A line plot is inappropriate for independent transaction observations, and sorting does not reduce the visual density of the points.",
+          "correct_answer": "ax.set_xscale('log')",
+          "explanation": "A logarithmic scale (`'log'`) transforms multiplicative relationships into additive ones. For data spanning several orders of magnitude (such as income or population), a log scale prevents extreme outliers from compressing the rest of the distribution, making variations at the lower end of the scale visible.",
           "image_path": null
         },
         {
           "id": "data_visualization_easy_q5",
           "difficulty": "Easy",
-          "text": "You are tasked with visualizing the distribution of annual salaries across five different departments in your company. You want to show the median, the spread (interquartile range), and identify any potential outliers for each department. Which visualization is best suited for this specific task?",
+          "text": "Consider the standard boxplot shown below.\n\nWhich statistical metric is represented by the solid horizontal line inside the box?",
           "options": [
-            "A grouped box plot",
-            "A stacked bar chart",
-            "A multi-line line chart",
-            "A pie chart for each department"
+            "Median (50th percentile)",
+            "Mean",
+            "Mode",
+            "First quartile (25th percentile)"
           ],
-          "correct_answer": "A grouped box plot",
-          "explanation": "A box plot (or box-and-whisker plot) is specifically designed to display the distribution of a continuous variable (salary) across categorical groups (departments). It visually represents the median (the line inside the box), the interquartile range (the box itself), the range (whiskers), and individual outliers (points beyond the whiskers). Bar charts, line charts, and pie charts do not inherently show these statistical properties (like IQR and outliers) effectively.",
-          "image_path": null
+          "correct_answer": "Median (50th percentile)",
+          "explanation": "In a standard box-and-whisker plot, the box extends from the first quartile ($Q_1$) to the third quartile ($Q_3$). The line inside the box represents the median (the second quartile or 50th percentile) of the dataset. The mean is typically not shown unless explicitly added as a separate marker.",
+          "image_path": "dataviz_easy_q5_boxplot.png"
         },
         {
           "id": "data_visualization_easy_q6",
           "difficulty": "Easy",
-          "text": "You are plotting the distribution of company revenues, which spans from $10,000$ to $10,000,000,000$. Because a few massive companies dominate the scale, the histogram is heavily skewed to the right, and the smaller companies are squeezed into a single tall bar on the left. Consider the following code: ```python\nimport matplotlib.pyplot as plt\nfig, ax = plt.subplots()\nax.hist(df['revenue'], bins=50)\n``` Which line of code should you add to make the distribution of smaller companies readable?",
+          "text": "Consider the following pandas DataFrame scenario:\n\n```python\nimport seaborn as sns\n# df is a pandas DataFrame with columns: 'age', 'income', and 'education_level'\n```\n\nWhich parameter should you pass to `sns.scatterplot` to automatically color-code the data points based on the categorical values in `education_level`?",
           "options": [
-            "ax.set_xscale('log')",
-            "ax.set_yscale('log')",
-            "ax.set_xlim(0, 100000)",
-            "ax.set_ylim(0, 100)"
+            "hue='education_level'",
+            "color='education_level'",
+            "palette='education_level'",
+            "style='education_level'"
           ],
-          "correct_answer": "ax.set_xscale('log')",
-          "explanation": "Since the revenue values (plotted on the x-axis) span several orders of magnitude, applying a logarithmic scale to the x-axis (`ax.set_xscale('log')`) spreads out the values exponentially, allowing the distribution of both small and large companies to be viewed clearly. Setting the y-axis to log scale would only change the representation of the bin counts (frequencies), not the spacing of the revenue values themselves. Limiting the x-axis to $100,000$ would truncate the vast majority of the data.",
+          "correct_answer": "hue='education_level'",
+          "explanation": "In Seaborn, the `hue` parameter is used to map a grouping variable (either categorical or numeric) to the color of the plot elements. The `color` parameter applies a single color to all elements, `palette` specifies the colormap to use, and `style` changes the marker shapes.",
           "image_path": null
         },
         {
           "id": "data_visualization_easy_q7",
           "difficulty": "Easy",
-          "text": "You are creating a geographic heatmap to visualize temperature anomalies across the globe. The data ranges from $-5$ degrees (colder than average, represented by blue) to $0$ degrees (no change, represented by white) to $+5$ degrees (warmer than average, represented by red). Which type of color palette is most appropriate for this visualization?",
+          "text": "You want to visualize a correlation matrix of 10 numeric features to find collinearity:\n\n```python\nimport seaborn as sns\nimport matplotlib.pyplot as plt\n\ncorr_matrix = df.corr()\n```\n\nWhich Seaborn plotting function is most commonly used to visualize this matrix as a grid of colored squares with the correlation values printed inside each cell?",
           "options": [
-            "A diverging color palette",
-            "A sequential color palette",
-            "A qualitative color palette",
-            "A monochromatic color palette"
+            "sns.heatmap(corr_matrix, annot=True)",
+            "sns.clustermap(corr_matrix, show_values=True)",
+            "sns.pairplot(corr_matrix)",
+            "sns.gridplot(corr_matrix, labels=True)"
           ],
-          "correct_answer": "A diverging color palette",
-          "explanation": "A diverging color palette is used when the data has a meaningful central midpoint (like $0$ degrees anomaly) and deviates in two opposite directions. It typically uses two contrasting hues that increase in intensity as they move away from the neutral center. Sequential palettes are best for data that goes from low to high without a natural midpoint. Qualitative palettes are for nominal/categorical data.",
+          "correct_answer": "sns.heatmap(corr_matrix, annot=True)",
+          "explanation": "`sns.heatmap` is designed to plot rectangular data as a color-encoded matrix. Specifying `annot=True` ensures that the numeric values (correlation coefficients) are written inside each cell, which is standard practice for analyzing feature correlation.",
           "image_path": null
         },
         {
           "id": "data_visualization_easy_q8",
           "difficulty": "Easy",
-          "text": "You want to visualize the relationship between `carat` and `price` of diamonds using a scatter plot. You also want to distinguish the diamonds by their `cut` quality (e.g., Ideal, Premium, Good) using different colors, and by their `clarity` using different marker shapes. Which of the following calls correctly maps `cut` to color and `clarity` to shape?",
+          "text": "You need to compare the trends over time of two variables with completely different units and scales: Global Temperature (in Celsius) and Atmospheric $\\text{CO}_2$ concentration (in ppm). According to data visualization best practices, what is the preferred alternative to using a dual y-axis plot?",
           "options": [
-            "sns.scatterplot(data=diamonds, x=\"carat\", y=\"price\", hue=\"cut\", style=\"clarity\")",
-            "sns.scatterplot(data=diamonds, x=\"carat\", y=\"price\", color=\"cut\", marker=\"clarity\")",
-            "sns.scatterplot(data=diamonds, x=\"carat\", y=\"price\", palette=\"cut\", markers=\"clarity\")",
-            "sns.scatterplot(data=diamonds, x=\"carat\", y=\"price\", hue=\"cut\", size=\"clarity\")"
+            "Using faceted subplots (small multiples) stacked vertically sharing the same x-axis.",
+            "Normalizing both series to a 0-1 scale and plotting them on a single y-axis without labels.",
+            "Plotting them on a 3D line plot where time is represented on the z-axis.",
+            "Converting one of the continuous variables to a categorical variable to use a grouped bar chart."
           ],
-          "correct_answer": "sns.scatterplot(data=diamonds, x=\"carat\", y=\"price\", hue=\"cut\", style=\"clarity\")",
-          "explanation": "In Seaborn's `scatterplot`, the `hue` parameter is used to map a categorical variable to different colors, and the `style` parameter is used to map a categorical variable to different marker styles (shapes). The `color` and `marker` arguments in matplotlib/seaborn are typically used for uniform styling, not for mapping variables to aesthetics. The `size` parameter maps a variable to marker size, not shape.",
+          "correct_answer": "Using faceted subplots (small multiples) stacked vertically sharing the same x-axis.",
+          "explanation": "Dual y-axes can easily mislead readers because the relative scaling of the two axes is arbitrary, which can artificially align or exaggerate trends. Faceted subplots (small multiples) stacked vertically let readers compare the progression of both variables over the identical time axis (x-axis) without scale distortion.",
           "image_path": null
         }
       ],
@@ -1048,113 +1048,113 @@
         {
           "id": "data_visualization_moderate_q1",
           "difficulty": "Moderate",
-          "text": "You are visualizing global temperature anomalies where values represent deviations from a baseline mean (e.g., $-3.5^\\circ\\text{C}$ to $+3.5^\\circ\\text{C}$). You need to choose an appropriate colormap in `matplotlib` to clearly highlight both extreme warming and extreme cooling. Which of the following code snippets and colormap choices is most appropriate for this task?",
+          "text": "You are evaluating a linear regression model and generate the residual plot shown below. Based on the pattern observed in the residual plot, which of the following is the most appropriate next step to improve the model's specification?",
           "options": [
-            "`sns.heatmap(df, cmap='coolwarm', center=0)` because a diverging colormap clearly distinguishes positive and negative deviations from the baseline.",
-            "`sns.heatmap(df, cmap='Viridis', center=0)` because sequential colormaps are optimal for highlighting extreme values across a continuous range.",
-            "`sns.heatmap(df, cmap='YlOrRd')` because warm colors are psychologically associated with temperature and will emphasize the warming trend.",
-            "`sns.heatmap(df, cmap='tab10', center=0)` because qualitative colormaps prevent the user from misinterpreting small gradient variations."
+            "Apply a log transformation to the target variable to stabilize non-constant variance.",
+            "Introduce a polynomial feature (such as $x^2$) or a non-linear term for the predictor variable.",
+            "Remove outliers since the residuals are already normally distributed with constant variance.",
+            "Switch to a logistic regression model because the residuals show binary classification behavior."
           ],
-          "correct_answer": "`sns.heatmap(df, cmap='coolwarm', center=0)` because a diverging colormap clearly distinguishes positive and negative deviations from the baseline.",
-          "explanation": "For data with a meaningful central reference point (like $0$ for anomalies), a diverging colormap like `coolwarm`, `RdBu`, or `PRGn` is essential. It uses two contrasting hues at the extremes that meet at an unsaturated neutral color at the center. Sequential colormaps like `Viridis` or `YlOrRd` are best for data that goes from low to high without a natural midpoint. Qualitative colormaps like `tab10` are for categorical data and lack a logical ordering.",
-          "image_path": null
+          "correct_answer": "Introduce a polynomial feature (such as $x^2$) or a non-linear term for the predictor variable.",
+          "explanation": "A distinct parabolic or U-shaped pattern in a residual plot (where residuals are plotted against fitted values or predictors) indicates that the relationship between the predictor and the response variable is non-linear. The linear model is failing to capture this curvature, leading to systematic under- and over-predictions. Adding a polynomial term (such as $x^2$) or applying a non-linear transformation to the predictor variable is the standard way to capture this quadratic relationship. Log transformations are typically used when residuals exhibit heteroscedasticity (a funnel shape).",
+          "image_path": "data_visualization_moderate_q1_residual_plot.png"
         },
         {
           "id": "data_visualization_moderate_q2",
           "difficulty": "Moderate",
-          "text": "You are evaluating a linear regression model and inspect the Residuals vs Fitted plot shown in the residual plot shown below. The plot displays a distinct, non-random U-shaped pattern of residuals centered around the zero line, and the spread of residuals increases significantly as the fitted values increase. What does this visualization indicate about your model, and how should you address it?",
+          "text": "Consider the following Python code snippet using Seaborn:\n\n```python\nimport seaborn as sns\nimport matplotlib.pyplot as plt\nimport pandas as pd\n\ndf = pd.DataFrame({\n    'x': [1, 2, 3, 4, 5, 6],\n    'y': [2, 4, 1, 5, 2, 6],\n    'category': ['Low', 'High', 'Medium', 'Low', 'High', 'Medium']\n})\n\ng = sns.FacetGrid(df, col='category', col_order=['Low', 'Medium', 'High'])\ng.map(plt.scatter, 'x', 'y')\nplt.show()\n```\n\nWhat will be the exact sequence of the subplots from left to right in the generated visualization?",
           "options": [
-            "It indicates perfect homoscedasticity and a well-specified linear relationship. No modifications to the model are required.",
-            "It indicates multicollinearity among the independent variables. You should calculate the Variance Inflation Factor (VIF) and drop highly correlated features.",
-            "It indicates non-linearity and heteroscedasticity. You should consider applying a non-linear transformation to the features (e.g., polynomial terms) or target, and use weighted least squares or a log-transform to stabilize variance.",
-            "It indicates that the residuals are normally distributed but contain outliers. You should apply a robust scaler to the input features."
+            "Low, Medium, High",
+            "Low, High, Medium",
+            "High, Medium, Low",
+            "The subplots will be ordered alphabetically: High, Low, Medium"
           ],
-          "correct_answer": "It indicates non-linearity and heteroscedasticity. You should consider applying a non-linear transformation to the features (e.g., polynomial terms) or target, and use weighted least squares or a log-transform to stabilize variance.",
-          "explanation": "A U-shaped pattern in a Residuals vs Fitted plot indicates a non-linear relationship that the linear model failed to capture (violating the linearity assumption). The widening spread of residuals as fitted values increase indicates heteroscedasticity (non-constant variance). To address non-linearity, polynomial features or non-linear models can be used. To address heteroscedasticity, transforming the target variable (e.g., $\\log(y)$) or using weighted least squares is appropriate. Multicollinearity is not directly diagnosed via a residuals vs fitted plot.",
-          "image_path": "residuals_vs_fitted.png"
+          "correct_answer": "Low, Medium, High",
+          "explanation": "The `col_order` parameter in `sns.FacetGrid` explicitly dictates the sequence of the columns in the grid. Even though the original DataFrame has the categories in the order of 'Low', 'High', 'Medium', passing `col_order=['Low', 'Medium', 'High']` overrides both the default alphabetical sorting and the order of appearance in the data, resulting in the panels being arranged from left to right as Low, Medium, and High.",
+          "image_path": null
         },
         {
           "id": "data_visualization_moderate_q3",
           "difficulty": "Moderate",
-          "text": "You are plotting a scatter plot of a dataset containing $1,000,000$ rows with two continuous variables, `x` and `y`. The resulting plot is a solid blob of color due to extreme overplotting, making it impossible to discern the density of the data points. Which of the following approaches is the most effective visualization strategy to reveal the underlying density distribution?",
+          "text": "You are designing a dashboard to visualize global temperature anomalies relative to a baseline average. The anomalies range from $-3.0^\\circ\\text{C}$ to $+3.0^\\circ\\text{C}$. Which type of colormap and specific color scheme is most perceptually appropriate for this visualization?",
           "options": [
-            "Increase the marker size using `plt.scatter(x, y, s=100)` to ensure all points are visible.",
-            "Use `plt.hexbin(x, y, gridsize=50, cmap='inferno')` or a 2D histogram to bin the space and map density to color.",
-            "Sort the dataset in ascending order of `x` before plotting to align the overlapping points.",
-            "Switch to a line plot using `plt.plot(x, y)` to connect the points sequentially."
+            "A sequential colormap such as 'Blues' to show the magnitude of change from the lowest to the highest anomaly.",
+            "A qualitative colormap such as 'Set1' to distinguish between different geographic regions.",
+            "A diverging colormap such as 'RdBu_r' (Red-Blue reversed) centered at $0.0^\\circ\\text{C}$.",
+            "A uniform grayscale colormap to prevent cognitive bias from color-blind users."
           ],
-          "correct_answer": "Use `plt.hexbin(x, y, gridsize=50, cmap='inferno')` or a 2D histogram to bin the space and map density to color.",
-          "explanation": "When dealing with large datasets, standard scatter plots suffer from overplotting. Binning techniques like hexagonal binning (`plt.hexbin`) or 2D histograms (`plt.hist2d`) aggregate points into spatial bins and use color to represent density, making patterns visible. Increasing marker size worsens overplotting. Sorting the dataset does not solve density visualization. A line plot would create a chaotic, unreadable zig-zag pattern.",
+          "correct_answer": "A diverging colormap such as 'RdBu_r' (Red-Blue reversed) centered at $0.0^\\circ\\text{C}$.",
+          "explanation": "Temperature anomalies deviate in two opposite directions (positive/warming and negative/cooling) from a meaningful central baseline ($0.0^\\circ\\text{C}$). A diverging colormap (like Red-Blue, where red represents positive anomalies and blue represents negative anomalies) is the standard and most perceptually effective choice. 'RdBu_r' puts red on the positive side and blue on the negative side, which aligns with human temperature associations (red for hot, blue for cold). Sequential colormaps are best for monotonic data, while qualitative maps are meant for categorical data.",
           "image_path": null
         },
         {
           "id": "data_visualization_moderate_q4",
           "difficulty": "Moderate",
-          "text": "You are comparing three binary classification models (Model A, Model B, and Model C) using the ROC curves shown in the ROC curves shown below. Model A has a higher True Positive Rate (TPR) when the False Positive Rate (FPR) is below $0.15$, but Model B has a higher TPR for all FPR values above $0.15$. Model C lies entirely below both Model A and Model B. If your business constraint strictly requires keeping the FPR below $0.10$, which model should you select and why?",
+          "text": "You train a random forest classifier and plot its calibration curve (reliability diagram) shown below. The dashed diagonal line represents a perfectly calibrated model. Based on the plotted curve, how should you interpret the model's predicted probabilities?",
           "options": [
-            "Select Model B, because it likely has a higher overall Area Under the ROC Curve (AUC) across the entire range of thresholds.",
-            "Select Model C, because a lower curve indicates a more conservative model that minimizes false positives.",
-            "Select Model B, because a higher TPR at high FPR values guarantees better precision.",
-            "Select Model A, because it dominates in the low-FPR region ($\\text{FPR} < 0.15$) which aligns with your strict business constraint."
+            "The model is overconfident; its predicted probabilities are systematically closer to 0 and 1 than the true empirical frequencies.",
+            "The model is underconfident; its predicted probabilities are clustered too close to 0.5, meaning it underestimates high risks and overestimates low risks.",
+            "The model is perfectly calibrated across all probability bins.",
+            "The model is making random guesses because the calibration curve is completely flat."
           ],
-          "correct_answer": "Select Model A, because it dominates in the low-FPR region ($\\text{FPR} < 0.15$) which aligns with your strict business constraint.",
-          "explanation": "Although Model B might have a higher overall AUC, the business constraint strictly limits the FPR to below $0.10$. In this specific operational region ($\\text{FPR} < 0.10$), Model A achieves a higher True Positive Rate (sensitivity) than Model B. Therefore, Model A is the optimal choice under this constraint. Model C is inferior to both across all thresholds.",
-          "image_path": "roc_auc_comparison.png"
+          "correct_answer": "The model is overconfident; its predicted probabilities are systematically closer to 0 and 1 than the true empirical frequencies.",
+          "explanation": "In a calibration curve (reliability plot), the y-axis is the fraction of positives and the x-axis is the mean predicted probability. An overconfident model typically exhibits an S-shaped curve that lies below the diagonal $y=x$ for high predicted probabilities (meaning the model predicts high probabilities like 0.9, but the true positive rate is only 0.7) and above the diagonal for low predicted probabilities (e.g., predicting 0.1 when the true rate is 0.3). This indicates the model's predictions are too extreme.",
+          "image_path": "data_visualization_moderate_q4_calibration_curve.png"
         },
         {
           "id": "data_visualization_moderate_q5",
           "difficulty": "Moderate",
-          "text": "You are visualizing a highly skewed financial transaction dataset where transaction amounts range from $0$ to $10,000,000$ dollars. You want to apply a logarithmic scale to the axis to visualize the distribution. However, your dataset contains many transactions of exactly $0$ dollars. Which of the following approaches is the most statistically and visually sound way to handle this in `matplotlib`?",
+          "text": "You are plotting the daily growth of active users for a rapidly scaling startup over a 12-month period. The active user count grew from 1,000 to 1,500,000. When plotted on a standard linear scale, early-stage growth details are completely flattened. Which scale transformation and visualization technique should you apply to make both early-stage and late-stage growth rates interpretable?",
           "options": [
-            "Use `ax.set_xscale('symlog')` which applies a symmetrical logarithmic scale that handles zero and negative values gracefully.",
-            "Apply a standard log scale `ax.set_xscale('log')` and let `matplotlib` automatically discard the zero values.",
-            "Add a large constant like $10,000$ to all values before applying a standard log transformation to avoid zero errors.",
-            "Replace all zeros with a negative infinity placeholder value so they are plotted off-screen."
+            "Use a logarithmic scale on the y-axis (`ax.set_yscale('log')`), which represents equal percentage changes as equal vertical distances.",
+            "Use a square root scale on the y-axis (`ax.set_yscale('squareroot')`) to compress the higher values while keeping the zero baseline.",
+            "Normalize the daily user count by subtracting the mean and dividing by the standard deviation, then plot on a linear scale.",
+            "Apply a log transformation to the x-axis (`ax.set_xscale('log')`) to compress the timeline."
           ],
-          "correct_answer": "Use `ax.set_xscale('symlog')` which applies a symmetrical logarithmic scale that handles zero and negative values gracefully.",
-          "explanation": "A standard logarithmic scale is undefined at zero ($\\log(0) = -\\infty$). Using `symlog` (symmetrical log) in `matplotlib` allows for logarithmic scaling of positive and negative values while maintaining a linear scale near zero (defined by the `linthresh` parameter). Discarding zeros loses valuable data. Adding a very large constant distorts the relationship and relative differences of smaller values. Negative infinity cannot be plotted.",
+          "correct_answer": "Use a logarithmic scale on the y-axis (`ax.set_yscale('log')`), which represents equal percentage changes as equal vertical distances.",
+          "explanation": "When data spans multiple orders of magnitude (e.g., 1,000 to 1,500,000), a linear scale compresses smaller values to the baseline, making early-stage trends invisible. A logarithmic scale on the y-axis (using `ax.set_yscale('log')` in matplotlib) allows visualization of exponential growth as a straight line, where equal vertical intervals correspond to equal multiplicative changes (e.g., 10x increases), rendering both early-stage and late-stage trends readable.",
           "image_path": null
         },
         {
           "id": "data_visualization_moderate_q6",
           "difficulty": "Moderate",
-          "text": "You are analyzing student performance data across two schools. An aggregated bar chart shows that School A has a higher overall graduation rate than School B. However, when you facet the visualization by student socioeconomic status (SES) using `sns.FacetGrid`, you observe that School B has a higher graduation rate than School A within every single SES category. What is this visual phenomenon called, and how should you present the final visualization?",
+          "text": "You need to visualize a scatter plot of 500,000 data points to identify density regions and potential clusters. Running `plt.scatter(x, y)` results in a solid mass of overlapping points (overplotting). Which of the following approaches is the most effective way to resolve this issue and reveal the true density distribution?",
           "options": [
-            "This is Berkson's Fallacy. You should present only the aggregated chart because subgroup analysis introduces selection bias.",
-            "This is Simpson's Paradox. You should present the faceted visualization because the aggregated chart hides the confounding effect of socioeconomic status.",
-            "This is the Ecological Fallacy. You should combine both charts into a single dual-axis line plot to average out the differences.",
-            "This is Regression to the Mean. You should apply a log-transform to the graduation rates to align the two perspectives."
+            "Reduce the marker size to its absolute minimum and set the transparency parameter `alpha` to a very low value (e.g., 0.01), or use a 2D histogram/hexbin plot.",
+            "Apply a standard scaler to both variables to restrict their range to $[-3, 3]$.",
+            "Sort the data points in ascending order of the x-axis before plotting to prevent overlapping.",
+            "Switch to a line plot (`plt.plot(x, y)`) to connect all 500,000 points sequentially."
           ],
-          "correct_answer": "This is Simpson's Paradox. You should present the faceted visualization because the aggregated chart hides the confounding effect of socioeconomic status.",
-          "explanation": "Simpson's Paradox occurs when a trend appears in several groups of data but disappears or reverses when these groups are combined. In this scenario, socioeconomic status is a confounding variable. Presenting only the aggregated chart is misleading because it suggests School A is better, whereas School B actually performs better when controlling for SES. Faceting or grouping by the confounder is the correct visualization strategy.",
+          "correct_answer": "Reduce the marker size to its absolute minimum and set the transparency parameter `alpha` to a very low value (e.g., 0.01), or use a 2D histogram/hexbin plot.",
+          "explanation": "To mitigate overplotting with high-cardinality datasets, reducing the marker size and adding transparency (`alpha`) allows overlapping points to build up color density, revealing high-concentration areas. Alternatively, aggregating points into spatial bins using 2D histograms (`plt.hist2d`) or hexbin plots (`plt.hexbin`) is highly effective for representing density without rendering individual markers.",
           "image_path": null
         },
         {
           "id": "data_visualization_moderate_q7",
           "difficulty": "Moderate",
-          "text": "You are designing a dashboard to track a subscription service. You want to display monthly 'New Signups' (ranging from $1,000$ to $5,000$) and 'Churn Rate' (ranging from $1\\%$ to $5\\%$) on the same chart over a 12-month period. Why is using a dual y-axis chart (with `ax.twinx()`) often discouraged by visualization experts, and what is a preferred alternative?",
+          "text": "Consider the following code snippet using Matplotlib:\n\n```python\nimport matplotlib.pyplot as plt\n\nfig, axes = plt.subplots(1, 2, figsize=(10, 5))\n```\n\nWhich of the following code blocks correctly plots a line on the second subplot and sets its title using Matplotlib's object-oriented API?",
           "options": [
-            "Dual y-axes are discouraged because they double the rendering time of the dashboard. A preferred alternative is to plot both metrics on a single y-axis with a logarithmic scale.",
-            "Dual y-axes are discouraged because they require both variables to have the exact same units. A preferred alternative is to normalize both variables to a range of $[0, 1]$ and plot them on a single axis.",
-            "Dual y-axes can easily mislead viewers because the relative scaling of the two axes is arbitrary, which can falsely imply or obscure correlations. A preferred alternative is to use two vertically stacked panel charts sharing the same x-axis.",
-            "Dual y-axes are discouraged because they cannot display time-series data. A preferred alternative is a 3D scatter plot."
+            "`axes[1].plot(x, y)` followed by `axes[1].set_title('Second Plot')`",
+            "`axes[2].plot(x, y)` followed by `axes[2].set_title('Second Plot')`",
+            "`plt.subplot(1, 2, 2)` followed by `plt.plot(x, y)` and `plt.title('Second Plot')`",
+            "`axes[1].plot(x, y)` followed by `axes[1].title('Second Plot')`"
           ],
-          "correct_answer": "Dual y-axes can easily mislead viewers because the relative scaling of the two axes is arbitrary, which can falsely imply or obscure correlations. A preferred alternative is to use two vertically stacked panel charts sharing the same x-axis.",
-          "explanation": "Dual y-axis charts are highly criticized because changing the scale of one axis can visually manipulate the relationship between the two curves, suggesting correlations that do not exist or hiding ones that do. A cleaner, more honest alternative is to use small multiples or stacked panel charts where each metric has its own independent panel but shares a common x-axis (time), allowing for easy alignment without scale confusion.",
+          "correct_answer": "`axes[1].plot(x, y)` followed by `axes[1].set_title('Second Plot')`",
+          "explanation": "`plt.subplots(1, 2)` returns a figure object and a 1D NumPy array of Axes objects containing two elements (`axes[0]` and `axes[1]`). To interact with the second subplot using the object-oriented API, we index `axes[1]`. The correct method to set the title on an Axes object is `.set_title()`, whereas `.title()` is a pyplot-state-machine function, not an Axes method.",
           "image_path": null
         },
         {
           "id": "data_visualization_moderate_q8",
           "difficulty": "Moderate",
-          "text": "You need to compare 8 different machine learning model configurations across 6 continuous evaluation metrics (e.g., Accuracy, Precision, Recall, Inference Latency, Memory Footprint, Training Time). Which of the following visualization techniques scales best for this high-dimensional comparison without introducing visual artifacts or ordering bias?",
+          "text": "You are comparing two different feature importance visualizations for a Random Forest classifier trained on a dataset with high-cardinality categorical features and continuous features. The Gini importance (mean decrease in impurity) plot shows high-cardinality features as highly important, while the Permutation Importance plot shows them as much less important. Why does this discrepancy occur?",
           "options": [
-            "A Radar (Spider) Chart, because the area enclosed by the polygon is a mathematically robust representation of overall model quality regardless of axis ordering.",
-            "A Grouped Bar Chart with 48 bars, because humans are highly efficient at comparing the heights of adjacent bars across 6 distinct groups.",
-            "A 3D Scatter Plot with bubble size, color, and rotation representing the remaining dimensions.",
-            "A Parallel Coordinates Plot, because it allows all 6 dimensions to be plotted as parallel vertical axes, making it easy to trace individual model profiles."
+            "Gini importance is biased towards high-cardinality features because they offer more split points, artificially inflating their importance.",
+            "Permutation importance is computationally unstable and fails to capture non-linear interactions inherent in high-cardinality features.",
+            "Gini importance evaluates features on out-of-bag data, whereas permutation importance evaluates features on the training set.",
+            "High-cardinality features have higher variance, which naturally increases their permutation importance scores."
           ],
-          "correct_answer": "A Parallel Coordinates Plot, because it allows all 6 dimensions to be plotted as parallel vertical axes, making it easy to trace individual model profiles.",
-          "explanation": "Parallel Coordinates Plots are excellent for visualizing high-dimensional datasets. Each metric gets its own vertical axis, and each model configuration is represented as a line connecting its values across these axes. Radar charts suffer from 'area bias' where the perceived size of the polygon depends heavily on the arbitrary order in which the axes are arranged. Grouped bar charts with 48 bars become extremely cluttered and hard to compare. 3D plots suffer from perspective distortion and are difficult to interpret.",
+          "correct_answer": "Gini importance is biased towards high-cardinality features because they offer more split points, artificially inflating their importance.",
+          "explanation": "Gini importance (mean decrease in impurity) calculated during tree construction is heavily biased towards features with many unique values (high cardinality) or continuous features. This is because tree algorithms have more opportunities to split on these features, leading to an overestimation of their true predictive power on unseen data. Permutation importance, especially when calculated on a validation set, is unbiased because it measures the actual drop in model performance when the feature's values are shuffled.\n\n| Feature Importance Type | Calculation Basis | Bias Profile |\n| --- | --- | --- |\n| **Gini / Impurity-based** | Training set node impurity reduction | Biased towards high-cardinality / continuous features |\n| **Permutation-based** | Drop in score on validation/test set after shuffling feature | Unbiased, computationally heavier |",
           "image_path": null
         }
       ],
@@ -1162,71 +1162,71 @@
         {
           "id": "data_visualization_advanced_q1",
           "difficulty": "Advanced",
-          "text": "You are reviewing the diagnostic plots for a multiple linear regression model predicting housing prices. In the 'Residuals vs Fitted' plot shown in the residual plot shown below, you observe that the residuals form a distinct U-shaped curve, and their spread increases significantly as the fitted values increase. Which of the following is the most appropriate next step to address both of these visual diagnostics?",
+          "text": "You are evaluating a binary classification model and have plotted its calibration curve (reliability diagram) using the code below. The resulting plot is shown below.\n\n```python\nimport matplotlib.pyplot as plt\nfrom sklearn.calibration import calibration_curve\n\n# y_true: ground truth labels, y_prob: predicted probabilities\nprob_true, prob_pred = calibration_curve(y_true, y_prob, n_bins=10, strategy='uniform')\n\nfig, ax = plt.subplots(figsize=(6, 6))\nax.plot([0, 1], [0, 1], linestyle='--', color='gray', label='Perfectly Calibrated')\nax.plot(prob_pred, prob_true, marker='o', label='Model')\nax.set_xlabel('Mean Predicted Probability')\nax.set_ylabel('Fraction of Positives')\nax.legend()\nplt.show()\n```\n\nIn the displayed plot, the model's curve lies entirely below the diagonal line $y = x$ for predicted probabilities greater than 0.5, and entirely above the diagonal line for predicted probabilities less than 0.5. Which of the following statements correctly interprets this visual pattern and identifies the appropriate calibration technique to correct it?",
           "options": [
-            "Apply a log-transform to the target variable $y$ and introduce quadratic terms for the non-linear predictors.",
-            "Add more independent variables to the model to reduce bias and perform L1 regularization (Lasso).",
-            "Perform a Box-Cox transformation on the independent variables only and use Weighted Least Squares (WLS) with weights proportional to the fitted values.",
-            "Remove the outliers that are pulling the residual mean away from zero and switch to a robust Huber regression."
+            "The model is underconfident; its predicted probabilities are too close to 0.5. This can be corrected using Platt scaling (sigmoid calibration) to stretch the probabilities away from 0.5.",
+            "The model is overconfident; its predicted probabilities are too close to 0 and 1. This can be corrected using Platt scaling or Isotonic Regression to push the extreme probabilities back toward 0.5.",
+            "The model has high variance; the curve indicates that the fraction of positives is independent of the predicted probability. This should be corrected by increasing the n_bins parameter to reduce binning bias.",
+            "The model is systematically pessimistic; it underestimates the true probability across all bins. This can be corrected by applying a constant log-odds shift."
           ],
-          "correct_answer": "Apply a log-transform to the target variable $y$ and introduce quadratic terms for the non-linear predictors.",
-          "explanation": "The U-shaped curve in the 'Residuals vs Fitted' plot indicates a non-linear relationship between the predictors and the target, which can be addressed by adding quadratic or polynomial terms for the non-linear predictors. The increasing spread of residuals (heteroscedasticity) indicates that the variance of the error terms is not constant. Applying a variance-stabilizing transformation, such as a log-transform, to the target variable $y$ is a standard approach to stabilize variance and linearize multiplicative relationships.",
-          "image_path": "residuals_vs_fitted.png"
+          "correct_answer": "The model is overconfident; its predicted probabilities are too close to 0 and 1. This can be corrected using Platt scaling or Isotonic Regression to push the extreme probabilities back toward 0.5.",
+          "explanation": "When the calibration curve lies below the diagonal line $y = x$ for predicted probabilities $p > 0.5$, it means the model is predicting a higher probability of the positive class than the actual empirical frequency of positives (e.g., predicting 80% confidence but only 60% are positive). Conversely, when the curve lies above the diagonal for $p < 0.5$, the model is predicting a lower probability of the positive class than the empirical frequency (e.g., predicting 20% positive but 40% are positive). In both cases, the model's predictions are pushed too far toward the extreme ends ($0$ and $1$) relative to the actual frequencies, which is the definition of overconfidence.\n\nTo correct this, we apply probability calibration techniques:\n- **Platt Scaling (Sigmoid Calibration)**: Fits a logistic regression model on the model's raw logits or outputs to map them to calibrated probabilities. This is highly effective for parametric distortions.\n- **Isotonic Regression**: A non-parametric method that fits a monotonic stepwise function. It is highly flexible and works well when there is sufficient calibration data to prevent overfitting.",
+          "image_path": "data_visualization_advanced_q1_calibration_curve.png"
         },
         {
           "id": "data_visualization_advanced_q2",
           "difficulty": "Advanced",
-          "text": "You are evaluating two binary classification models for fraud detection. Looking at the ROC curves in the ROC curves shown below, the curve for Model A and Model B cross. Model A has a higher True Positive Rate (TPR) when the False Positive Rate (FPR) is below $0.15$, while Model B has a higher TPR when the FPR is above $0.15$. The overall Area Under the ROC Curve ($AUC$) is slightly higher for Model B ($AUC = 0.88$) than Model A ($AUC = 0.85$). If your business constraint strictly limits the false positive rate to at most $10\\%$, which model should you select and why?",
+          "text": "Consider the task of visualizing a dataset with $10^7$ data points using Matplotlib. When saving the scatter plot as a vector format (such as PDF or SVG), the resulting file size is over 150 MB and takes several minutes to render. Which of the following approaches is the most effective and idiomatic way to dramatically reduce both the file size and rendering time while preserving vector-formatted axes, labels, and legends?",
           "options": [
-            "Model A, because it dominates Model B in the specific operational region where $FPR \\leq 0.10$, making the overall $AUC$ metric secondary.",
-            "Model B, because its overall $AUC$ of $0.88$ indicates superior global discriminative power across all thresholds.",
-            "Model A, but only if you apply a calibration technique like Platt scaling to align its predicted probabilities with the true empirical frequencies.",
-            "Model B, because a higher $AUC$ mathematically guarantees a lower expected cost under any cost-benefit matrix."
+            "Pass `rasterized=True` to the `scatter()` or `plot()` call, which renders the data points themselves as a high-resolution bitmap embedded within the vector SVG/PDF container.",
+            "Convert the data points to a path using `matplotlib.path.Path` and set `antialiased=False` on the resulting `PathPatch` to bypass the renderer's vector engine.",
+            "Use `plt.gcf().canvas.draw_idle()` to force Matplotlib to use lazy evaluation, which skips rendering non-visible overlapping vector elements.",
+            "Switch the active backend to `matplotlib.use('Agg')` and save the figure as an SVG with the `svg.image_inline` parameter set to `False` in `rcParams`."
           ],
-          "correct_answer": "Model A, because it dominates Model B in the specific operational region where $FPR \\leq 0.10$, making the overall $AUC$ metric secondary.",
-          "explanation": "When ROC curves cross, the model with the higher overall $AUC$ is not guaranteed to perform better at all decision thresholds. Since the business constraint strictly limits the false positive rate to $FPR \\leq 0.10$, we must evaluate the models specifically within that region. Because Model A's curve lies above Model B's curve for all $FPR < 0.15$, Model A provides a higher True Positive Rate (TPR) under the specified constraint, making it the optimal choice despite having a lower global $AUC$.",
-          "image_path": "roc_auc_comparison.png"
+          "correct_answer": "Pass `rasterized=True` to the `scatter()` or `plot()` call, which renders the data points themselves as a high-resolution bitmap embedded within the vector SVG/PDF container.",
+          "explanation": "Vector graphic formats (like PDF and SVG) store every individual point as a distinct XML element or vector instruction. For millions of points, this results in massive file sizes and terrible rendering performance because the viewing application (like a web browser or PDF reader) must compute and draw each point individually.\n\nSetting `rasterized=True` inside the Matplotlib artist call (e.g., `ax.scatter(x, y, rasterized=True)`) tells Matplotlib to render the heavy, complex graphical elements (the millions of scatter markers) into a single high-resolution bitmap (raster image) during the export process. Crucially, the rest of the figure—including the axes, tick marks, labels, text, and legend—is still exported as clean, infinitely scalable vector paths. This combines the performance and file-size benefits of raster graphics with the crisp, professional aesthetics of vector graphics.",
+          "image_path": null
         },
         {
           "id": "data_visualization_advanced_q3",
           "difficulty": "Advanced",
-          "text": "You are building a custom joint plot from scratch in Matplotlib to visualize a bivariate distribution with marginal density histograms. You want a $3 \\times 3$ grid where the main scatter plot occupies the bottom-left $2 \\times 2$ area, the top marginal histogram occupies the top-left $1 \\times 2$ area, and the right marginal histogram occupies the bottom-right $2 \\times 1$ area. Which of the following `GridSpec` indexing configurations correctly instantiates these three subplots?",
+          "text": "You are designing a diagnostic dashboard to visualize continuous spatial predictions of a model. The following figure shows the same 2D Gaussian mixture distribution plotted using two different colormaps: Colormap A (left) and Colormap B (right).\n\nAnalyze the visual characteristics of both plots. Why is Colormap B scientifically superior to Colormap A for representing continuous quantitative data?",
           "options": [
-            "```python\nimport matplotlib.pyplot as plt\nfig = plt.figure(figsize=(8, 8))\ngs = fig.add_gridspec(3, 3)\nax_main = fig.add_subplot(gs[1:, :2])\nax_top = fig.add_subplot(gs[0, :2])\nax_right = fig.add_subplot(gs[1:, 2])\n```",
-            "```python\nimport matplotlib.pyplot as plt\nfig = plt.figure(figsize=(8, 8))\ngs = fig.add_gridspec(3, 3)\nax_main = fig.add_subplot(gs[:2, :2])\nax_top = fig.add_subplot(gs[2, :2])\nax_right = fig.add_subplot(gs[:2, 2])\n```",
-            "```python\nimport matplotlib.pyplot as plt\nfig = plt.figure(figsize=(8, 8))\ngs = fig.add_gridspec(3, 3)\nax_main = fig.add_subplot(gs[1:3, 1:3])\nax_top = fig.add_subplot(gs[0, 1:3])\nax_right = fig.add_subplot(gs[1:3, 0])\n```",
-            "```python\nimport matplotlib.pyplot as plt\nfig = plt.figure(figsize=(8, 8))\ngs = fig.add_gridspec(3, 3)\nax_main = fig.add_subplot(gs[0:2, 0:2])\nax_top = fig.add_subplot(gs[2, 0:2])\nax_right = fig.add_subplot(gs[0:2, 2])\n```"
+            "Colormap B is perceptually uniform (such as 'viridis' or 'plasma'), meaning the perceived change in color is linear with the change in data value. Colormap A (such as 'jet') has non-monotonic luminance gradients, which introduces artificial visual boundaries and distorts the user's perception of the underlying gradient.",
+            "Colormap B uses a diverging color scheme that highlights the mean of the distribution, whereas Colormap A is a sequential scheme that is only appropriate for bounded, non-negative interval data.",
+            "Colormap B uses a qualitative color scheme that minimizes cognitive load, whereas Colormap A uses a continuous RGB interpolation that causes severe Mach band illusions at the extreme ends of the distribution.",
+            "Colormap B has a higher color gamut compression ratio, allowing it to bypass the Helmholtz-Kohlrausch effect where highly saturated colors appear brighter than they actually are."
           ],
-          "correct_answer": "```python import matplotlib.pyplot as plt; fig = plt.figure(figsize=(8, 8)); gs = fig.add_gridspec(3, 3); ax_main = fig.add_subplot(gs[1:, :2]); ax_top = fig.add_subplot(gs[0, :2]); ax_right = fig.add_subplot(gs[1:, 2]) ```",
-          "explanation": "In Matplotlib's `GridSpec` with a $3 \\times 3$ layout, rows and columns are indexed from 0 to 2. The main scatter plot needs to occupy the bottom-left $2 \\times 2$ area, which corresponds to rows 1 and 2, and columns 0 and 1. This is represented by the slice `gs[1:, :2]`. The top marginal histogram occupies the top-left $1 \\times 2$ area, corresponding to row 0 and columns 0 and 1, represented by `gs[0, :2]`. The right marginal histogram occupies the bottom-right $2 \\times 1$ area, corresponding to rows 1 and 2, and column 2, represented by `gs[1:, 2]`. This matches the correct option exactly.",
-          "image_path": null
+          "correct_answer": "Colormap B is perceptually uniform (such as 'viridis' or 'plasma'), meaning the perceived change in color is linear with the change in data value. Colormap A (such as 'jet') has non-monotonic luminance gradients, which introduces artificial visual boundaries and distorts the user's perception of the underlying gradient.",
+          "explanation": "Human vision is highly sensitive to changes in luminance (brightness) compared to hue. In a perceptually uniform colormap (like `viridis`, `plasma`, or `inferno`), luminance increases or decreases monotonically across the entire scale. This ensures that equal steps in the data space correspond to equal steps in perceived brightness, preventing visual distortion.\n\nIn contrast, traditional rainbow colormaps like `jet` or `rainbow` are not perceptually uniform. Their luminance curve peaks and drops repeatedly (for instance, yellow is perceived as extremely bright, while red and blue are perceived as dark). This non-monotonicity creates visual artifacts, such as false boundaries (where a smooth gradient appears to have sharp edges) and hides actual transitions in darker regions. Additionally, rainbow colormaps are highly problematic for individuals with color vision deficiencies.\n\nHere is a summary of colormap classifications:\n\n| Colormap Type | Monotonic Luminance? | Best Use Case | Examples |\n| :--- | :--- | :--- | :--- |\n| **Perceptually Uniform** | Yes | Continuous, ordered data where interval steps must represent equal perceptual steps | `viridis`, `plasma`, `inferno`, `magma`, `cividis` |\n| **Sequential** | Often No (except uniform) | Ordered data transitioning from low to high intensity | `Blues`, `Greens`, `YlOrRd` |\n| **Diverging** | No (symmetric around center) | Data with a critical middle value (e.g., zero, mean, anomaly) | `RdBu`, `Seismic`, `coolwarm` |\n| **Qualitative** | No | Categorical data with no inherent ordering | `Set1`, `Dark2`, `tab10` |",
+          "image_path": "data_visualization_advanced_q3_colormap_comparison.png"
         },
         {
           "id": "data_visualization_advanced_q4",
           "difficulty": "Advanced",
-          "text": "You are visualizing a high-dimensional single-cell RNA-seq dataset ($D \\in \\mathbb{R}^{20000 \\times 500}$) using t-SNE to identify distinct cell-type clusters. The resulting 2D scatter plot shows a single, crowded, undifferentiated cloud of points with no clear separation, even though biological ground-truth labels suggest at least 8 distinct cell types. Which of the following hyperparameter adjustments or preprocessing steps is most likely to resolve this crowding problem and reveal the underlying cluster structure?",
+          "text": "Consider the following code snippet designed to plot a Pareto-style chart containing both count bars and a cumulative percentage line on a single Matplotlib figure:\n\n```python\nimport matplotlib.pyplot as plt\nimport numpy as np\n\ncategories = ['A', 'B', 'C', 'D', 'E']\ncounts = [50, 40, 30, 20, 10]\ncumulative = np.cumsum(counts) / np.sum(counts) * 100\n\nfig, ax1 = plt.subplots()\nbars = ax1.bar(categories, counts, color='skyblue', label='Counts')\nax1.set_ylabel('Counts')\nax1.grid(True)\n\nax2 = ax1.twinx()\nline, = ax2.plot(categories, cumulative, color='red', marker='o', label='Cumulative %')\nax2.set_ylabel('Cumulative %')\nax2.grid(True)\n```\n\nWhen executing this code, two critical visual issues occur:\n1. The gridlines from `ax2` are drawn directly on top of the bars of `ax1`, cluttering the visualization.\n2. The legend handles are split between the two axes, making it difficult to generate a single, clean legend box.\n\nWhich of the following modifications is the most robust way to resolve BOTH issues?",
           "options": [
-            "Apply Principal Component Analysis (PCA) to reduce the dimensionality to 30-50 components before running t-SNE, and increase the perplexity to scale with the expected size of the local neighborhoods.",
-            "Reduce the perplexity parameter significantly (e.g., from 30 to 2) to force the algorithm to focus on global geometry rather than local neighborhoods.",
-            "Increase the learning rate ($\\eta$) to a value larger than the number of samples ($N$) and set the early exaggeration parameter to 1.0.",
-            "Switch to a linear Multidimensional Scaling (MDS) projection, as non-linear manifold learning algorithms inherently suffer from the crowding problem in high dimensions."
+            "Turn off the grid on `ax2` using `ax2.grid(False)`. To combine legends, extract the handles and labels from both axes and pass them together to `ax1.legend()`:\n```python\nax2.grid(False)\nh1, l1 = ax1.get_legend_handles_labels()\nh2, l2 = ax2.get_legend_handles_labels()\nax1.legend(h1 + h2, l1 + l2, loc='upper left')\n```",
+            "Set the z-order of `ax1` to be higher than `ax2` using `ax1.set_zorder(ax2.get_zorder() + 1)` and set `ax1.patch.set_visible(False)` to prevent it from hiding `ax2`. Matplotlib will automatically merge legends if they share the same x-axis.",
+            "Disable gridlines on both axes and use `ax1.vlines()` to draw custom gridlines. For the legend, call `plt.legend(handles=[bars, line])` which globally registers handles across all active axes.",
+            "Use `ax2.twinx(sharey=ax1)` to force both axes to share the same coordinate system, which automatically merges the gridlines and combines the legend handles into a unified container."
           ],
-          "correct_answer": "Apply Principal Component Analysis (PCA) to reduce the dimensionality to 30-50 components before running t-SNE, and increase the perplexity to scale with the expected size of the local neighborhoods.",
-          "explanation": "Running t-SNE directly on high-dimensional data with hundreds of features often fails due to the curse of dimensionality and noise, leading to the crowding problem where points collapse into a single mass. Preprocessing with PCA to reduce dimensions to 30-50 preserves the most significant variance while removing high-frequency noise. Adjusting the perplexity upward helps capture larger-scale structures and prevents the algorithm from creating artificial micro-clusters. Reducing perplexity to 2 would worsen the issue by focusing only on immediate neighbors, while MDS is linear and cannot capture the complex non-linear manifold of single-cell data.",
+          "correct_answer": "Turn off the grid on `ax2` using `ax2.grid(False)`. To combine legends, extract the handles and labels from both axes and pass them together to `ax1.legend()`:\n```python\nax2.grid(False)\nh1, l1 = ax1.get_legend_handles_labels()\nh2, l2 = ax2.get_legend_handles_labels()\nax1.legend(h1 + h2, l1 + l2, loc='upper left')\n```",
+          "explanation": "When using `ax1.twinx()`, Matplotlib overlays a second independent Axes (`ax2`) directly on top of the first (`ax1`). By default, both axes may attempt to draw gridlines. Because `ax2` is drawn on top of `ax1`, its gridlines will slice through the bars of `ax1`, which looks highly unprofessional. The standard solution is to turn off the gridlines on the secondary axis using `ax2.grid(False)`.\n\nFurthermore, because the artists (bars and lines) belong to different Axes objects, calling `ax1.legend()` or `ax2.legend()` will only show the label for that specific axis. To create a single unified legend, you must programmatically extract the handles and labels from both axes using `get_legend_handles_labels()`, concatenate them, and pass them to one of the legend calls (typically `ax1.legend()` to place it within the primary coordinate space).",
           "image_path": null
         },
         {
           "id": "data_visualization_advanced_q5",
           "difficulty": "Advanced",
-          "text": "You are auditing a business intelligence dashboard that monitors Daily Active Users (DAU) and Daily Revenue using a dual-axis line chart (left y-axis for DAU, right y-axis for Revenue). The chart shows both lines closely tracking each other, suggesting a strong correlation. However, you notice that the left axis ranges from $10,000$ to $100,000$ (linear) while the right axis ranges from $\\$50,000$ to $\\$60,000$ (linear). Why is this dual-axis visualization design fundamentally flawed, and what is the best alternative to objectively analyze the relationship between these two variables?",
+          "text": "Consider the following data visualization task: You have a dataset containing 500,000 samples and 2 continuous features. You run the code below to visualize the relationship between these features across classes, but the resulting plot is a solid mass of overlapping points, rendering the visualization useless.\n\n```python\nimport seaborn as sns\nimport matplotlib.pyplot as plt\n\n# df has 500,000 rows with 'feature_1', 'feature_2', and 'target'\nsns.scatterplot(data=df, x='feature_1', y='feature_2', hue='target', alpha=1.0)\nplt.show()\n```\n\nWhich of the following visual design choices or plotting techniques is the LEAST effective for resolving this overplotting problem while preserving the integrity of the data representation?",
           "options": [
-            "Dual-axis charts are misleading because arbitrary scaling of the two axes can artificially manufacture or obscure correlation. A superior alternative is to plot the ratio of Revenue to DAU (ARPU) over time, or use a scatter plot of Revenue versus DAU with a time-index color gradient.",
-            "The design is flawed because both axes must use a logarithmic scale when representing different units. The best alternative is to keep the dual axes but force both to start at $0$.",
-            "Dual-axis charts are only flawed when the variables have different physical units. The best alternative is to normalize both variables using Z-score standardization and plot them on a single, shared y-axis with a legend.",
-            "The design is flawed because it violates the principle of graphical integrity by not using a 3D perspective. The best alternative is a 3D surface plot showing DAU, Revenue, and Time on three orthogonal axes."
+            "Applying a high degree of transparency (`alpha=0.01`) to the scatter markers while keeping a solid color mapping.",
+            "Using a 2D density plot (such as a contour plot or a hexbin plot) faceted by the target variable.",
+            "Applying a jittering effect to both the $x$ and $y$ coordinates by adding a large, uniformly distributed random noise factor.",
+            "Subsampling the dataset to a manageable size (e.g., 10,000 points) using stratified sampling based on the target variable."
           ],
-          "correct_answer": "Dual-axis charts are misleading because arbitrary scaling of the two axes can artificially manufacture or obscure correlation. A superior alternative is to plot the ratio of Revenue to DAU (ARPU) over time, or use a scatter plot of Revenue versus DAU with a time-index color gradient.",
-          "explanation": "Dual-axis charts are highly susceptible to manipulation because the relative scaling and offsets of the two y-axes are completely arbitrary. By adjusting the scale of the right axis (e.g., narrowing the range to $\\$50,000$ to $\\$60,000$), small fluctuations can be visually exaggerated to match the scale of the left axis, creating an illusion of tight correlation. To objectively analyze the relationship, one should either plot a normalized ratio like Average Revenue Per User ($ARPU = \\frac{\\text{Revenue}}{\\text{DAU}}$) to see if efficiency is changing, or use a scatter plot of Revenue vs. DAU (with color representing time) to directly observe the joint distribution and correlation without axis-scaling artifacts.",
+          "correct_answer": "Applying a jittering effect to both the $x$ and $y$ coordinates by adding a large, uniformly distributed random noise factor.",
+          "explanation": "Overplotting occurs when there are too many data points, causing them to overlap and obscure density, patterns, and class distributions. Let's analyze the options:\n\n1. **High Transparency (`alpha=0.01`)**: Highly effective. It allows overlapping points to build up color density, making high-density regions darker/more saturated and revealing the true distribution.\n2. **2D Density Plot / Hexbin Faceting**: Highly effective. Binning the data spatially (using hexagons or contour lines) aggregates the density mathematically, completely eliminating point overlap while preserving spatial trends.\n3. **Subsampling (e.g., Stratified)**: Highly effective. Visualizing a representative subset (e.g., 10,000 points) maintains the relative distribution and density ratios without overwhelming the canvas.\n4. **Jittering with a large noise factor**: **LEAST effective and harmful**. Jittering is designed for discrete or heavily rounded categorical data to separate overlapping points slightly (by adding tiny noise). Adding a *large* random noise factor to continuous features will distort the actual mathematical relationship (correlation, variance, and clusters) between the variables, destroying the visual integrity of the dataset.",
           "image_path": null
         }
       ]
@@ -1652,114 +1652,114 @@
         {
           "id": "machine_learning_moderate_q1",
           "difficulty": "Moderate",
-          "text": "You are evaluating two binary classification models, Model A and Model B, for a high-stakes fraud detection system. Looking at the ROC curves in the ROC curves shown below, Model A has an overall $AUC = 0.88$ while Model B has an overall $AUC = 0.82$. However, your business requirement dictates a strict constraint that the False Positive Rate ($FPR$) must not exceed $0.05$. In the region where $FPR \\leq 0.05$, Model B's curve lies consistently above Model A's curve. Which model should you deploy, and why?",
+          "text": "You are building a fraud detection model where fraudulent transactions are extremely rare (less than 0.1% of all transactions). After training an initial classifier, you need to evaluate its performance. Which of the following evaluation metrics would be most appropriate to assess the model's ability to identify fraud effectively, given the severe class imbalance?",
           "options": [
-            "Model A, because its overall $AUC$ of $0.88$ indicates superior global discriminative power across all possible thresholds.",
-            "Model B, because it achieves a higher True Positive Rate ($TPR$) within the operationally acceptable range of $FPR \\leq 0.05$.",
-            "Model A, because a higher overall $AUC$ mathematically guarantees a lower False Discovery Rate at any specific threshold.",
-            "Neither model; you must retrain them because an overall $AUC$ difference of $0.06$ makes the models statistically incompatible."
+            "Accuracy",
+            "ROC-AUC",
+            "Precision-Recall AUC",
+            "F1-score"
           ],
-          "correct_answer": "Model B, because it achieves a higher True Positive Rate ($TPR$) within the operationally acceptable range of $FPR \\leq 0.05$.",
-          "explanation": "While global AUC is a useful summary metric, the operational constraint ($FPR \\leq 0.05$) restricts the decision space. Within this specific region, Model B dominates Model A by providing a higher True Positive Rate (sensitivity). Therefore, Model B is the correct choice for this specific business constraint. Model A's superior performance at higher false positive rates is irrelevant to this production scenario.",
-          "image_path": "roc_auc_comparison.png"
+          "correct_answer": "Precision-Recall AUC",
+          "explanation": "For highly imbalanced datasets, Accuracy can be misleading because a model that simply predicts the majority class for all instances will achieve high accuracy. ROC-AUC is less sensitive to class imbalance than accuracy, but it can still be overly optimistic for highly imbalanced datasets as it considers both true positive rate (recall) and false positive rate. Precision-Recall AUC, on the other hand, focuses on the performance of the positive class (fraud in this case) and is particularly sensitive to the trade-off between precision and recall, making it a much more informative metric when the positive class is rare. A high Precision-Recall AUC indicates that the model can achieve high precision without sacrificing too much recall, which is crucial in fraud detection where both minimizing false positives and maximizing true positives are important. While F1-score is also good for imbalanced data, PR-AUC provides a comprehensive view across all possible thresholds.",
+          "image_path": null
         },
         {
           "id": "machine_learning_moderate_q2",
           "difficulty": "Moderate",
-          "text": "You have trained a multiple linear regression model to predict housing prices. To diagnose potential violations of ordinary least squares (OLS) assumptions, you generate the Residuals vs. Fitted plot shown in the residual plot shown below. The plot displays a distinct, non-random parabolic (U-shaped) pattern centered around zero. Which of the following is the most appropriate next step to address this issue?",
+          "text": "A binary classification model has been trained to predict a rare disease. The dataset is highly imbalanced, with only 1% of patients having the disease. Initial evaluation shows that the model has high precision but very low recall for the positive class (patients with the disease). To improve the model's ability to detect more true positive cases, what action should you take regarding the decision threshold, assuming you want to prioritize recall over precision?",
           "options": [
-            "Apply a log-transform to the target variable to stabilize the non-constant variance (heteroscedasticity).",
-            "Introduce polynomial terms or non-linear transformations of the predictor variables to capture the non-linear relationship.",
-            "Remove the top $5\\%$ of the data points with the largest residuals, as they are likely leverage points causing the curvature.",
-            "Switch to a Weighted Least Squares (WLS) estimator because the parabolic shape indicates that the error terms are correlated."
+            "Increase the decision threshold",
+            "Decrease the decision threshold",
+            "Keep the threshold at 0.5 and resample the minority class",
+            "Keep the threshold at 0.5 and use a more complex model"
           ],
-          "correct_answer": "Introduce polynomial terms or non-linear transformations of the predictor variables to capture the non-linear relationship.",
-          "explanation": "A parabolic pattern in the Residuals vs. Fitted plot indicates that the relationship between the predictors and the target is non-linear (i.e., the model is underfitting a non-linear trend). Adding polynomial features (like $x^2$) or other non-linear transformations helps capture this curvature. Heteroscedasticity would look like a funnel shape, not a parabola, so log-transforming the target to fix variance is not the primary solution here. Removing outliers does not address the underlying functional misspecification.",
-          "image_path": "residuals_vs_fitted.png"
+          "correct_answer": "Decrease the decision threshold",
+          "explanation": "The decision threshold determines how strictly the model classifies an instance as positive. If a model has high precision but low recall for the positive class, it means it is very confident when it predicts a positive, but it misses many actual positive cases. To improve recall, we need the model to be more lenient in classifying instances as positive. Decreasing the decision threshold means that the model will classify an instance as positive even with a lower predicted probability, thereby increasing the number of true positives and, consequently, recall. This will likely come at the cost of precision (more false positives), but it directly addresses the goal of improving recall. Resampling or using a more complex model might be useful in other scenarios or as a next step, but adjusting the threshold is the direct way to trade off precision for recall on an already trained model.",
+          "image_path": null
         },
         {
           "id": "machine_learning_moderate_q3",
           "difficulty": "Moderate",
-          "text": "Consider the following custom scikit-learn transformer designed to perform target encoding on a categorical column: ```python\nclass NaiveTargetEncoder(BaseEstimator, TransformerMixin):\n    def fit(self, X, y): self.mapping_ = X.groupby('cat')['target'].mean().to_dict()\n    return self\n    def transform(self, X):\n        return X['cat'].map(self.mapping_)\n``` If you use this transformer inside a `Pipeline` with `cross_val_score`, why does it still introduce target leakage, and how should it be resolved?",
+          "text": "Consider a scenario where you are developing a machine learning model. You perform feature scaling (e.g., StandardScaler from scikit-learn) on your entire dataset before splitting it into training and testing sets. After this, you train your model on the scaled training data and evaluate it on the scaled test data. What is the primary issue with this preprocessing workflow?",
           "options": [
-            "The leakage occurs because `fit` is called on the entire dataset inside `cross_val_score`. To fix it, you must compute the mapping using only the out-of-fold target values during the `transform` step.",
-            "The leakage occurs because the target column `y` is passed directly during `fit` and stored in `self.mapping_`. To fix it, you should use out-of-fold target encoding (e.g., K-Fold target encoding) within the training fold to prevent overfitting.",
-            "There is no leakage because the `Pipeline` automatically splits the data before calling `fit`, meaning `NaiveTargetEncoder` only sees the training fold during cross-validation.",
-            "The leakage occurs because `fillna(0)` uses a constant value. To fix it, you must fill missing values with the global mean of the target variable from the test fold."
+            "It leads to data leakage from the test set into the training process.",
+            "It significantly increases the computational cost of training the model.",
+            "It causes the model to underfit due to over-normalization.",
+            "It makes the model less interpretable because feature scales are lost."
           ],
-          "correct_answer": "The leakage occurs because the target column `y` is passed directly during `fit` and stored in `self.mapping_`. To fix it, you should use out-of-fold target encoding (e.g., K-Fold target encoding) within the training fold to prevent overfitting.",
-          "explanation": "While a `Pipeline` prevents leakage from the validation fold to the training fold during cross-validation, target encoding *within* the training fold itself still causes severe overfitting (leakage of the target value of a specific row into its own feature representation). To prevent this, one must use out-of-fold target encoding (like K-Fold target encoding or adding smoothing/noise) specifically within the training set. This ensures that a sample's own target value does not influence its encoded feature value.",
+          "correct_answer": "It leads to data leakage from the test set into the training process.",
+          "explanation": "Applying feature scaling (or any data transformation that learns parameters from the data, like PCA) to the entire dataset *before* splitting introduces data leakage. The scaling parameters (mean and standard deviation for StandardScaler) are calculated using information from the entire dataset, including the test set. This means that information about the test set's distribution 'leaks' into the training process through the scaling transformation. Consequently, the model's performance on the test set will be an overly optimistic estimate of its real-world performance because it has implicitly 'seen' some characteristics of the test data during training. The correct approach is to fit the scaler only on the training data and then transform both the training and test data using the parameters learned from the training set.",
           "image_path": null
         },
         {
           "id": "machine_learning_moderate_q4",
           "difficulty": "Moderate",
-          "text": "You are building a machine learning model to detect rare system intrusions where only $0.05\\%$ of the network traffic represents actual attacks. You evaluate two models and obtain the following metrics: Model 1 has an ROC AUC of $0.98$ and a Precision-Recall AUC (PR-AUC) of $0.15$. Model 2 has an ROC AUC of $0.92$ and a PR-AUC of $0.65$. Which model should you choose, and why?",
+          "text": "You have trained a complex machine learning model to predict customer churn. For a specific customer, the model predicts a high probability of churn. You use SHAP (SHapley Additive exPlanations) values to understand this prediction. The SHAP values for three key features are:\n\n*   `Contract_Type`: +0.25 (for 'month-to-month' vs. 'annual')\n*   `Monthly_Charges`: +0.15 (for high charges)\n*   `Tenure`: -0.30 (for long tenure)\n\nIf the baseline prediction (expected value) for churn is 0.3, and the model's prediction for this customer is 0.65, how should you interpret the given SHAP values in relation to the model's prediction?",
           "options": [
-            "Model 1, because an ROC AUC of $0.98$ indicates a highly robust true positive rate across almost all decision thresholds.",
-            "Model 2, because PR-AUC is more informative for highly imbalanced datasets, and its higher PR-AUC indicates a much better balance of precision and recall for the rare positive class.",
-            "Model 1, because PR-AUC is highly sensitive to the class ratio and is therefore an unstable metric compared to the invariant ROC AUC.",
-            "Model 2, because a lower ROC AUC combined with a higher PR-AUC mathematically guarantees that the model has fewer false positives overall."
+            "Long tenure and high monthly charges are the primary drivers for this customer's high churn probability.",
+            "The 'month-to-month' contract type and high monthly charges increase the churn probability, while long tenure decreases it.",
+            "The model is biased, as the negative SHAP value for `Tenure` contradicts the high churn prediction.",
+            "All three features contribute positively to the high churn prediction, with `Tenure` having the strongest effect."
           ],
-          "correct_answer": "Model 2, because PR-AUC is more informative for highly imbalanced datasets, and its higher PR-AUC indicates a much better balance of precision and recall for the rare positive class.",
-          "explanation": "In highly imbalanced datasets, ROC AUC can be deceptively high because the False Positive Rate ($FPR = FP / (FP + TN)$) has a very large denominator ($TN$), making even a large number of false positives look small. PR-AUC focuses on the positive class (Precision = $TP / (TP + FP)$ and Recall = $TP / (TP + FN)$), making it far more sensitive to false positives in the minority class. Model 2 is superior because its high PR-AUC ($0.65$ vs $0.15$) indicates it actually maintains high precision and recall for the rare class.",
+          "correct_answer": "The 'month-to-month' contract type and high monthly charges increase the churn probability, while long tenure decreases it.",
+          "explanation": "SHAP values indicate how much each feature contributes to pushing the model's prediction from the baseline (average) prediction to the specific prediction for that instance. A positive SHAP value means the feature's value for that instance increases the prediction, while a negative SHAP value means it decreases the prediction. In this case:\n*   `Contract_Type`: +0.25 means the 'month-to-month' contract type increases the churn probability by 0.25.\n*   `Monthly_Charges`: +0.15 means high monthly charges increase the churn probability by 0.15.\n*   `Tenure`: -0.30 means long tenure decreases the churn probability by 0.30.\n\nThe sum of the baseline prediction and all SHAP values should approximate the model's output: $0.3 + 0.25 + 0.15 - 0.30 = 0.70$. This is close to the predicted 0.65 (slight differences can occur due to approximation or other features not listed). Therefore, the correct interpretation is that 'month-to-month' contract and high monthly charges push the prediction higher, while long tenure pushes it lower, but the combined positive effects are stronger, leading to a high churn prediction.",
           "image_path": null
         },
         {
           "id": "machine_learning_moderate_q5",
           "difficulty": "Moderate",
-          "text": "You are training a Lasso (L1-regularized) linear regression model to predict customer lifetime value. The predictor variables include `annual_income` (ranging from $\\$20,000$ to $\\$500,000$) and `age` (ranging from $18$ to $80$). You fit the model directly on the raw features without performing any feature scaling. What is the most likely consequence of this decision on the Lasso regularization process?",
+          "text": "When performing hyperparameter tuning using techniques like GridSearchCV or RandomizedSearchCV, it is common practice to use cross-validation on the training set. However, to get a truly unbiased estimate of the model's performance on unseen data, it's often recommended to use a separate, untouched test set *after* hyperparameter tuning. What is the primary reason for this approach, specifically why is evaluating on the final test set after tuning crucial?",
           "options": [
-            "The model will penalize the coefficient of `age` more heavily than `annual_income`, potentially driving the `age` coefficient to zero prematurely.",
-            "The model will penalize the coefficient of `annual_income` more heavily than `age` because its numerical values are much larger.",
-            "L1 regularization is scale-invariant, so the lack of feature scaling will have no impact on which coefficients are driven to zero.",
-            "The optimization algorithm (e.g., coordinate descent) will fail to converge, but the final selected features will remain mathematically identical."
+            "To prevent overfitting the hyperparameters to the cross-validation folds, which could lead to an optimistic performance estimate.",
+            "To speed up the hyperparameter tuning process by reducing the amount of data used for final evaluation.",
+            "To ensure that the model has seen all available data during the hyperparameter search phase.",
+            "To simplify the deployment process by having a single, final model for testing."
           ],
-          "correct_answer": "The model will penalize the coefficient of `age` more heavily than `annual_income`, potentially driving the `age` coefficient to zero prematurely.",
-          "explanation": "Lasso adds a penalty term $\\lambda \\sum |w_j|$ to the loss function. Because `annual_income` has a very large scale, its corresponding coefficient $w_{\\text{income}}$ will naturally be very small to achieve the same predictive effect. Conversely, `age` has a small scale, so its coefficient $w_{\\text{age}}$ must be relatively large. Since the L1 penalty treats all $|w_j|$ equally, the larger coefficient ($w_{\\text{age}}$) will contribute much more to the penalty term and will be driven to zero much faster than the smaller coefficient ($w_{\\text{income}}$), regardless of their actual predictive power. Therefore, feature scaling is critical before applying L1/L2 regularization.",
+          "correct_answer": "To prevent overfitting the hyperparameters to the cross-validation folds, which could lead to an optimistic performance estimate.",
+          "explanation": "When you tune hyperparameters using cross-validation on the training set, you are effectively using the cross-validation performance as a guide to select the 'best' hyperparameters. This process itself introduces a form of learning or optimization on the validation data. If you then evaluate your final model (with the best hyperparameters) on the same data used for tuning (even if it was cross-validated), you risk getting an overly optimistic estimate of its generalization performance. The model's hyperparameters have been 'optimized' for that specific data. By reserving an entirely separate, untouched test set, you ensure that the final performance evaluation is truly unbiased, reflecting how the model will perform on completely new, unseen data, and thus preventing 'overfitting' to the hyperparameter tuning process itself. This is sometimes referred to as 'nested cross-validation' where an outer loop creates the true train/test split, and an inner loop performs hyperparameter tuning with cross-validation on the training data.",
           "image_path": null
         },
         {
           "id": "machine_learning_moderate_q6",
           "difficulty": "Moderate",
-          "text": "You are tuning a Decision Tree classifier and comparing Gini Impurity and Entropy as splitting criteria. For a binary classification node with $p$ representing the probability of the positive class, the Gini Impurity is defined as $I_G(p) = 2p(1-p)$ and Entropy is defined as $I_H(p) = -p \\log_2(p) - (1-p) \\log_2(1-p)$. Which of the following statements accurately describes their practical and mathematical differences?",
+          "text": "Analyze the learning curves shown below, which plot the training error and validation error against the training set size. What does this pattern of learning curves primarily indicate about the model's performance?",
           "options": [
-            "Entropy is computationally faster to calculate because it does not require floating-point multiplication.",
-            "Gini Impurity penalizes impure nodes more aggressively than Entropy because its maximum value is $1.0$ while Entropy's maximum value is $0.5$.",
-            "They yield highly similar tree structures in practice, but Entropy can be slightly slower to compute due to the logarithmic functions.",
-            "Gini Impurity always produces perfectly balanced binary trees, whereas Entropy tends to produce highly skewed, deep trees."
+            "The model is suffering from high bias (underfitting).",
+            "The model is suffering from high variance (overfitting).",
+            "The model has achieved an optimal fit to the data.",
+            "There is data leakage occurring in the validation set."
           ],
-          "correct_answer": "They yield highly similar tree structures in practice, but Entropy can be slightly slower to compute due to the logarithmic functions.",
-          "explanation": "Gini Impurity and Entropy are mathematically very similar in shape (both are concave, peaking at $p=0.5$ where Gini is $0.5$ and Entropy is $1.0$). In practice, they choose the same splits about $90\\%$ of the time. The primary difference is computational: Entropy requires calculating logarithms, which is slightly more expensive than the basic arithmetic operations required for Gini Impurity.",
-          "image_path": null
+          "correct_answer": "The model is suffering from high bias (underfitting).",
+          "explanation": "The learning curves indicate high bias (underfitting). Key characteristics of high bias in learning curves are:\n1.  Both the training error and the validation error are high.\n2.  The gap between the training error and validation error is small, and they tend to converge at a high error rate as the training set size increases.\n\nThis pattern suggests that the model is too simple or not complex enough to capture the underlying patterns in the data, even with more training examples. It performs poorly on both the training data and unseen validation data. If it were high variance (overfitting), the training error would be low, and there would be a significant gap between the low training error and the high validation error.",
+          "image_path": "learning_curves_high_bias.png"
         },
         {
           "id": "machine_learning_moderate_q7",
           "difficulty": "Moderate",
-          "text": "You are training a $k$-Nearest Neighbors (k-NN) regression model. You decide to evaluate the performance of the model by varying the hyperparameter $k$. As you increase $k$ from $1$ to $100$ on a dataset of size $N=200$, how do the bias and variance of the model behave?",
+          "text": "You are considering using an ensemble method for a classification task. You are evaluating the differences between Random Forest and Gradient Boosting Machines (GBM). Which of the following statements best describes a key distinguishing characteristic of Gradient Boosting compared to Random Forest?",
           "options": [
-            "Bias increases and variance decreases because the decision boundary becomes smoother and less sensitive to individual noise points.",
-            "Bias decreases and variance increases because the model is able to capture more complex, localized patterns in the data.",
-            "Both bias and variance increase because a larger neighborhood introduces irrelevant data points that degrade model performance.",
-            "Both bias and variance decrease because the estimator asymptotically approaches the true conditional expectation $E[Y|X]$."
+            "Gradient Boosting builds multiple decision trees in parallel and averages their predictions to reduce variance.",
+            "Gradient Boosting uses a bagging technique where each tree is trained on a bootstrap sample of the data.",
+            "Gradient Boosting sequentially builds decision trees, where each new tree attempts to correct the errors of the previous trees.",
+            "Gradient Boosting is less prone to overfitting than Random Forest due to its inherent regularization properties."
           ],
-          "correct_answer": "Bias increases and variance decreases because the decision boundary becomes smoother and less sensitive to individual noise points.",
-          "explanation": "When $k=1$, the model has high variance and low bias because it perfectly fits the nearest training point (making the decision boundary highly complex and sensitive to noise). As $k$ increases, the prediction is averaged over a larger neighborhood, which smooths out the decision boundary (reducing variance) but makes the model less capable of capturing fine-grained local structures (increasing bias).",
+          "correct_answer": "Gradient Boosting sequentially builds decision trees, where each new tree attempts to correct the errors of the previous trees.",
+          "explanation": "The core difference lies in how the ensemble is built. Random Forest is an example of a bagging (Bootstrap Aggregating) ensemble method. It builds multiple independent decision trees in parallel, each on a bootstrap sample of the data, and then averages their predictions. This reduces variance. Gradient Boosting, on the other hand, is a boosting method. It builds trees sequentially and additively. Each new tree is trained to correct the residual errors (or 'mistakes') of the ensemble of all previously built trees. This sequential error correction allows Gradient Boosting to achieve high accuracy but also makes it more susceptible to overfitting if not properly regularized. Options A and B describe characteristics of bagging (like Random Forest), not boosting. Option D is incorrect; GBMs are generally *more* prone to overfitting than Random Forests and require careful tuning and regularization.",
           "image_path": null
         },
         {
           "id": "machine_learning_moderate_q8",
           "difficulty": "Moderate",
-          "text": "You have trained an XGBoost classifier that is currently overfitting the training data (training accuracy is $99.5\\%$, while validation accuracy is $81.2\\%$). Which of the following combinations of hyperparameter adjustments is most effective at reducing this overfitting?",
+          "text": "You've performed Principal Component Analysis (PCA) on a dataset with many features to reduce dimensionality. To decide how many principal components to retain, you examine the scree plot shown below. Based on the 'elbow method' applied to this plot, how many principal components would you recommend retaining?",
           "options": [
-            "Increase `max_depth`, decrease `min_child_weight`, and decrease `\\gamma`.",
-            "Decrease `max_depth`, increase `min_child_weight`, and increase `\\gamma`.",
-            "Decrease `max_depth`, decrease `colsample_bytree`, and decrease `reg_lambda`.",
-            "Increase `learning_rate`, increase `max_depth`, and increase `subsample`."
+            "1 principal component",
+            "2 principal components",
+            "3 principal components",
+            "4 principal components"
           ],
-          "correct_answer": "Decrease `max_depth`, increase `min_child_weight`, and increase `gamma`.",
-          "explanation": "To combat overfitting in XGBoost, you want to simplify the individual trees and add regularization: 1) Decreasing `max_depth` limits the depth of the trees, reducing complexity. 2) Increasing `min_child_weight` prevents the model from creating nodes that represent very few samples (which are prone to noise). 3) Increasing `\\gamma` (the minimum loss reduction required to make a split) acts as a conservative pruning mechanism.",
-          "image_path": null
+          "correct_answer": "3 principal components",
+          "explanation": "The scree plot displays the eigenvalues (or explained variance) associated with each principal component in descending order. The 'elbow method' involves looking for a point on the plot where the explained variance sharply decreases, forming an 'elbow' in the curve, after which the curve flattens out. This 'elbow' indicates the point where adding more principal components provides diminishing returns in terms of explained variance. In the provided scree plot, the sharpest drop in explained variance occurs after the 3rd principal component. The curve starts to flatten out significantly after this point. Therefore, retaining 3 principal components would capture most of the variance in the data while significantly reducing dimensionality.",
+          "image_path": "pca_scree_plot.png"
         }
       ],
       "Advanced": [
