@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 
@@ -49,6 +50,215 @@ function ErrorScreen({ message, onRetry }) {
       >
         Try Again
       </button>
+    </div>
+  )
+}
+
+// ─── Completion Screen ────────────────────────────────────────────────────────
+
+const DIFFICULTY_WEIGHTS = { Easy: 1, Moderate: 2, Advanced: 4 }
+const MAX_WEIGHTED_SCORE = 70
+
+/**
+ * reportStatus: 'loading' | 'ready' | 'downloaded' | 'failed'
+ */
+function CompletionScreen({ finalScore, maxScore, totalCorrect, totalQuestions, onRetake, downloadUrl, reportStatus }) {
+  const [email, setEmail] = useState('')
+  const [reportSent, setReportSent] = useState(false)
+  const [emailError, setEmailError] = useState('')
+
+  const percentage = maxScore > 0 ? Math.round((finalScore / maxScore) * 100) : 0
+
+  // Determine a motivating tier message
+  const tierLabel =
+    percentage >= 85 ? { text: 'Outstanding Performance', color: 'text-green-400' }
+    : percentage >= 70 ? { text: 'Strong Performance', color: 'text-blue-400' }
+    : percentage >= 50 ? { text: 'Good Effort', color: 'text-yellow-400' }
+    : { text: 'Keep Practicing', color: 'text-orange-400' }
+
+  function handleSendReport() {
+    if (!email.trim()) {
+      setEmailError('Please enter a valid email address.')
+      return
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setEmailError('Please enter a valid email address.')
+      return
+    }
+    setEmailError('')
+    // Demo-only: no backend call — transition to success state immediately
+    setReportSent(true)
+  }
+
+  // ── Inline AI Evaluation Report link ─────────────────────────────────────
+  function ReportLink() {
+    if (reportStatus === 'loading') {
+      return (
+        <span className="inline-flex items-center gap-1.5 text-blue-400 font-semibold">
+          <svg className="w-3.5 h-3.5 animate-spin flex-shrink-0" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+          </svg>
+          Generating AI Evaluation Report…
+        </span>
+      )
+    }
+
+    if (reportStatus === 'failed') {
+      return (
+        <span className="text-red-400 font-semibold">
+          Unable to generate AI Evaluation Report.
+        </span>
+      )
+    }
+
+    if (reportStatus === 'downloaded') {
+      return (
+        <span className="text-green-400 font-semibold">
+          ✓ AI Evaluation Report Downloaded
+        </span>
+      )
+    }
+
+    // 'ready' — clickable download link
+    return (
+      <a
+        href={`http://localhost:8000${downloadUrl}`}
+        download
+        className="text-blue-400 font-semibold underline underline-offset-2 cursor-pointer hover:text-blue-300 transition-colors duration-150"
+        id="ai-report-download-link"
+      >
+        AI Evaluation Report
+      </a>
+    )
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-6 py-16">
+      <LogoMark />
+
+      {/* Glow backdrop */}
+      <div className="relative w-full max-w-xl">
+        <div className="absolute inset-0 rounded-3xl bg-blue-600/10 blur-3xl pointer-events-none" />
+
+        <div className="relative bg-gray-900 border border-gray-800 rounded-3xl p-8 md:p-10 shadow-2xl">
+
+          {/* Header */}
+          <div className="text-center mb-8">
+            <span className="text-4xl mb-3 block">🎉</span>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white mb-1">Assessment Complete!</h1>
+            <p className={`text-sm font-semibold mt-1 ${tierLabel.color}`}>{tierLabel.text}</p>
+          </div>
+
+          {/* Score cards */}
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            {/* Weighted score */}
+            <div className="bg-gray-800/70 border border-gray-700/60 rounded-2xl p-5 text-center">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Final Score</p>
+              <p className="text-5xl font-extrabold text-white leading-none">
+                {finalScore}
+                <span className="text-2xl text-gray-500 font-semibold"> / {maxScore}</span>
+              </p>
+              <p className="text-xs text-gray-500 mt-2">weighted points</p>
+            </div>
+
+            {/* Correct count */}
+            <div className="bg-gray-800/70 border border-gray-700/60 rounded-2xl p-5 text-center">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Correct Answers</p>
+              <p className="text-5xl font-extrabold text-white leading-none">
+                {totalCorrect}
+                <span className="text-2xl text-gray-500 font-semibold"> / {totalQuestions}</span>
+              </p>
+              <p className="text-xs text-gray-500 mt-2">questions answered correctly</p>
+            </div>
+          </div>
+
+          {/* Progress bar */}
+          <div className="mb-8">
+            <div className="flex justify-between text-xs text-gray-500 mb-1.5">
+              <span>Your score</span>
+              <span>{percentage}%</span>
+            </div>
+            <div className="h-2.5 bg-gray-800 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-blue-600 to-blue-400 transition-all duration-700"
+                style={{ width: `${percentage}%` }}
+              />
+            </div>
+          </div>
+
+          {/* Report section */}
+          {!reportSent ? (
+            <div className="space-y-4">
+              <p className="text-gray-400 text-sm leading-relaxed text-center">
+                Enter your email below to receive your detailed{' '}
+                <ReportLink />{' '}
+                highlighting your technical strengths, blind spots, and personalized learning recommendations.
+              </p>
+
+              {reportStatus === 'failed' && (
+                <p className="text-red-400 text-xs text-center">
+                  Please try again later.
+                </p>
+              )}
+
+              <div>
+                <input
+                  id="report-email-input"
+                  type="email"
+                  value={email}
+                  onChange={e => { setEmail(e.target.value); setEmailError('') }}
+                  onKeyDown={e => e.key === 'Enter' && handleSendReport()}
+                  placeholder="your@email.com"
+                  className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all duration-200"
+                />
+                {emailError && (
+                  <p className="text-red-400 text-xs mt-1.5 pl-1">{emailError}</p>
+                )}
+              </div>
+
+              <button
+                id="send-report-btn"
+                onClick={handleSendReport}
+                className="w-full py-3.5 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-lg shadow-blue-900/40 hover:bg-blue-700 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(59,130,246,0.45)] transition-all duration-200 active:scale-100"
+              >
+                Send My Detailed Report
+              </button>
+
+              <button
+                id="retake-assessment-btn"
+                onClick={onRetake}
+                className="w-full py-3 rounded-xl font-semibold text-sm text-gray-400 border border-gray-700 hover:border-gray-600 hover:text-white hover:bg-gray-800 transition-all duration-200"
+              >
+                Take Assessment Again
+              </button>
+            </div>
+          ) : (
+            /* Success state */
+            <div className="space-y-5 text-center">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-14 h-14 rounded-2xl bg-green-900/40 border border-green-800/50 flex items-center justify-center">
+                  <svg className="w-7 h-7 text-green-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-green-400 font-bold text-base">✅ Report successfully queued for delivery!</p>
+                  <p className="text-gray-400 text-sm mt-1">Please check your inbox shortly.</p>
+                </div>
+              </div>
+
+              <button
+                id="return-home-btn"
+                onClick={onRetake}
+                className="w-full py-3 rounded-xl font-semibold text-sm text-gray-400 border border-gray-700 hover:border-gray-600 hover:text-white hover:bg-gray-800 transition-all duration-200"
+              >
+                Take Assessment Again
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -154,6 +364,10 @@ function QuestionCard({
     Advanced: 'bg-red-900/40 text-red-400 border-red-800/40',
   }[question.difficulty] || 'bg-gray-800 text-gray-400 border-gray-700'
 
+  // Point value
+  const points = question.difficulty === 'Easy' ? 1 : question.difficulty === 'Moderate' ? 2 : 4;
+  const pointLabel = points === 1 ? 'Point' : 'Points';
+
   return (
     <div className="flex flex-col h-full">
       {/* Section header */}
@@ -166,6 +380,12 @@ function QuestionCard({
             </span>
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full border ${difficultyColor}`}>
               {question.difficulty}
+            </span>
+            <span className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-gray-800 text-gray-300 border border-gray-700 shadow-sm">
+              <svg className="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              {points} {pointLabel}
             </span>
           </div>
         </div>
@@ -184,9 +404,20 @@ function QuestionCard({
       {/* Question text — rendered as Markdown */}
       <div className="mb-6 flex-1">
         <div className="text-white text-base md:text-lg font-medium leading-relaxed prose-question">
-          <ReactMarkdown components={markdownComponents} rehypePlugins={[rehypeKatex]} remarkPlugins={[remarkMath]}>{question.text}</ReactMarkdown>
+          <ReactMarkdown components={markdownComponents} rehypePlugins={[rehypeKatex]} remarkPlugins={[remarkMath, remarkGfm]}>{question.text}</ReactMarkdown>
         </div>
       </div>
+
+      {/* Reference image — shown only when question.image_path is set */}
+      {question.image_path && (
+        <div className="flex justify-center mb-6">
+          <img
+            src={`/images/${question.image_path}`}
+            alt="Reference visualization for question"
+            className="mt-2 max-w-full h-auto max-h-80 object-contain rounded-lg border border-slate-700 shadow-md"
+          />
+        </div>
+      )}
 
       {/* Options */}
       <div className="space-y-3 mb-8">
@@ -215,7 +446,7 @@ function QuestionCard({
                 {letters[i]}
               </span>
               <span className={`text-sm leading-relaxed ${isSelected ? 'text-white' : 'text-gray-300'} option-markdown`}>
-                <ReactMarkdown components={optionMarkdownComponents} rehypePlugins={[rehypeKatex]} remarkPlugins={[remarkMath]}>{option}</ReactMarkdown>
+                <ReactMarkdown components={optionMarkdownComponents} rehypePlugins={[rehypeKatex]} remarkPlugins={[remarkMath, remarkGfm]}>{option}</ReactMarkdown>
               </span>
               {/* Checkmark when selected */}
               {isSelected && (
@@ -329,6 +560,23 @@ const markdownComponents = {
   li({ children }) {
     return <li className="leading-relaxed">{children}</li>
   },
+  // Tables (for DataFrame rendering)
+  table({ children }) {
+    return (
+      <div className="overflow-x-auto my-4">
+        <table className="w-full text-left border-collapse text-sm">{children}</table>
+      </div>
+    )
+  },
+  thead({ children }) {
+    return <thead className="bg-gray-800/50">{children}</thead>
+  },
+  th({ children }) {
+    return <th className="border border-gray-700 px-3 py-2 font-semibold text-gray-300">{children}</th>
+  },
+  td({ children }) {
+    return <td className="border border-gray-700 px-3 py-2 text-gray-400">{children}</td>
+  },
 }
 
 /** Lighter renderer for option labels — inline-only, no block elements */
@@ -351,6 +599,23 @@ const optionMarkdownComponents = {
   // Unwrap paragraphs so options stay inline
   p({ children }) {
     return <span>{children}</span>
+  },
+  // Compact tables for option buttons
+  table({ children }) {
+    return (
+      <div className="w-full mt-2 mb-1 overflow-x-auto">
+        <table className="w-full text-left border-collapse text-xs bg-gray-900/50 rounded">{children}</table>
+      </div>
+    )
+  },
+  thead({ children }) {
+    return <thead className="bg-gray-800/80">{children}</thead>
+  },
+  th({ children }) {
+    return <th className="border border-gray-700 px-2 py-1.5 font-semibold text-gray-300">{children}</th>
+  },
+  td({ children }) {
+    return <td className="border border-gray-700 px-2 py-1.5 text-gray-400">{children}</td>
   },
 }
 
@@ -439,7 +704,16 @@ export default function QuizComponent({ user }) {
   const [selectedOption, setSelectedOption] = useState(null)
   const [completedSections, setCompletedSections] = useState(new Set())
 
-  // Track all answers: { sectionIdx-questionIdx: { question_text, user_answer, correct_answer, explanation, section_name } }
+  // Completion state
+  const [isComplete, setIsComplete] = useState(false)
+  const [finalScore, setFinalScore] = useState(0)
+  const [totalCorrect, setTotalCorrect] = useState(0)
+  const [totalQuestions, setTotalQuestions] = useState(0)
+  const [downloadUrl, setDownloadUrl] = useState(null)
+  // 'loading' | 'ready' | 'downloaded' | 'failed'
+  const [reportStatus, setReportStatus] = useState('loading')
+
+  // Track all answers: { sectionIdx-questionIdx: { question_text, user_answer, correct_answer, correct, difficulty, explanation, section_name } }
   const answersRef = useRef({})
 
   const fetchIdRef = useRef(0)
@@ -461,6 +735,12 @@ export default function QuizComponent({ user }) {
     setActiveQuestionIdx(0)
     setSelectedOption(null)
     setCompletedSections(new Set())
+    setIsComplete(false)
+    setFinalScore(0)
+    setTotalCorrect(0)
+    setTotalQuestions(0)
+    setDownloadUrl(null)
+    setReportStatus('loading')
     answersRef.current = {}
 
     try {
@@ -510,6 +790,7 @@ export default function QuizComponent({ user }) {
         question_text: question.text,
         user_answer: selectedOption,
         correct_answer: question.correct_answer,
+        difficulty: question.difficulty,
         explanation: question.explanation,
       }
     }
@@ -558,25 +839,28 @@ export default function QuizComponent({ user }) {
     const section = quizData.sections[activeSectionIdx]
     const question = section.questions[activeQuestionIdx]
 
-    // Record the final answer
+    // Record the final answer (including difficulty for weighted scoring)
     answersRef.current[`${activeSectionIdx}-${activeQuestionIdx}`] = {
       section_name: section.section_name,
       question_text: question.text,
       user_answer: selectedOption,
       correct_answer: question.correct_answer,
+      difficulty: question.difficulty,
       explanation: question.explanation,
     }
 
     // Mark final section complete
     setCompletedSections(prev => new Set([...prev, activeSectionIdx]))
 
-    // Tally results
+    // ── Tally results with weighted scoring ────────────────────────────────
     const allAnswers = Object.values(answersRef.current)
+    const correctAnswers = allAnswers.filter(a => a.user_answer === a.correct_answer)
     const wrongAnswers = allAnswers.filter(a => a.user_answer !== a.correct_answer)
-    const score = allAnswers.length - wrongAnswers.length
 
-    // ── Show score alert INSTANTLY (synchronous, never blocked) ───────────
-    alert(`✅ Assessment complete!\nScore: ${score} / ${allAnswers.length}\n\nYour results are being saved in the background.`)
+    // Weighted score: Easy=1, Moderate=2, Advanced=4
+    const weighted = correctAnswers.reduce((sum, a) => {
+      return sum + (DIFFICULTY_WEIGHTS[a.difficulty] ?? 1)
+    }, 0)
 
     // ── Build per-section score breakdown ─────────────────────────────────
     const sectionScores = {}
@@ -586,19 +870,42 @@ export default function QuizComponent({ user }) {
       sectionScores[sec.section_name] = secCorrect
     })
 
-    // ── Fire-and-forget POST — do NOT await, do NOT block UI ──────────────
+    // ── Transition to completion screen (no alert) ─────────────────────────
+    setFinalScore(weighted)
+    setTotalCorrect(correctAnswers.length)
+    setTotalQuestions(allAnswers.length)
+    setIsComplete(true)
+    setReportStatus('loading')
+
+    // ── Await POST so we can capture download_url ────────────────────────
     fetch('http://localhost:8000/api/submit-answers', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         name:            user?.name  || 'Anonymous',
         email:           user?.email || '',
-        score,
+        score:           weighted,
         total_questions: allAnswers.length,
         wrong_answers:   wrongAnswers,
         section_scores:  sectionScores,
       }),
-    }).catch(err => console.warn('Background submission error (non-fatal):', err))
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        return res.json()
+      })
+      .then(data => {
+        if (data.download_url) {
+          setDownloadUrl(data.download_url)
+          setReportStatus('ready')
+        } else {
+          setReportStatus('failed')
+        }
+      })
+      .catch(err => {
+        console.warn('Report submission error:', err)
+        setReportStatus('failed')
+      })
   }
 
   function handleSectionClick(idx) {
@@ -616,6 +923,21 @@ export default function QuizComponent({ user }) {
   }
 
   if (!quizData) return null
+
+  // ── Completion screen ─────────────────────────────────────────────
+  if (isComplete) {
+    return (
+      <CompletionScreen
+        finalScore={finalScore}
+        maxScore={MAX_WEIGHTED_SCORE}
+        totalCorrect={totalCorrect}
+        totalQuestions={totalQuestions}
+        onRetake={fetchQuiz}
+        downloadUrl={downloadUrl}
+        reportStatus={reportStatus}
+      />
+    )
+  }
 
   const sections = quizData.sections
   const activeSection = sections[activeSectionIdx]

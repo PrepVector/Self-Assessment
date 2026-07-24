@@ -28,7 +28,7 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.agents.report_writer import generate_evaluation_report
+from app.agents.report_writer import generate_evaluation_report, generate_pdf_report
 
 router = APIRouter()
 
@@ -36,6 +36,7 @@ router = APIRouter()
 _SUBMIT_DIR  = pathlib.Path(__file__).resolve().parent          # backend/app/api/
 _BACKEND_DIR = _SUBMIT_DIR.parent.parent                        # backend/
 _CSV_PATH    = _BACKEND_DIR / "data" / "user_assessments.csv"
+_REPORTS_DIR = _BACKEND_DIR / "generated_reports"
 
 _CSV_HEADERS = [
     "timestamp",
@@ -180,5 +181,28 @@ async def submit_answers_endpoint(submission: QuizSubmission):
         print(f"[submit_answers] ⚠️  Report generation skipped/failed: {exc}")
         report_markdown = "Report generation delayed until Phase 6."
 
-    # 3. Return the response
-    return {"report": report_markdown}
+    # 3. Convert Markdown report to PDF
+    download_url: str | None = None
+    try:
+        if report_markdown and report_markdown != "Report generation delayed until Phase 6.":
+            # Derive total correct from score (weighted) and wrong_answers count
+            total_answered  = submission.total_questions
+            total_wrong     = len(submission.wrong_answers)
+            total_correct   = max(0, total_answered - total_wrong)
+
+            pdf_path = generate_pdf_report(
+                markdown_text   = report_markdown,
+                candidate_name  = submission.name or "Candidate",
+                weighted_score  = submission.score,
+                total_correct   = total_correct,
+                total_questions = total_answered,
+            )
+            if pdf_path:
+                # Return only the filename — never expose server paths to the client
+                filename = pathlib.Path(pdf_path).name
+                download_url = f"/api/download-report/{filename}"
+    except Exception as pdf_exc:
+        print(f"[submit_answers] ⚠️  PDF generation failed (non-fatal): {pdf_exc}")
+
+    # 4. Return the response
+    return {"report": report_markdown, "download_url": download_url}

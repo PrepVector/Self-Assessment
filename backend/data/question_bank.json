@@ -600,15 +600,15 @@
         {
           "id": "python_advanced_q4",
           "difficulty": "Advanced",
-          "text": "You want to ensure that all classes inheriting from a specific base class automatically have a `_creation_timestamp` attribute set to the UTC time of their definition. You decide to use a metaclass for this. Examine the provided code:\n```python\nimport datetime\n\nclass TimestampMeta(type):\n    def __new__(mcs, name, bases, namespace):\n        # Which option correctly adds the timestamp?\n        # Option A:\n        # namespace['_creation_timestamp'] = datetime.datetime.utcnow()\n        # return super().__new__(mcs, name, bases, namespace)\n        #\n        # Option B:\n        # obj = super().__new__(mcs, name, bases, namespace)\n        # obj._creation_timestamp = datetime.datetime.utcnow()\n        # return obj\n        #\n        # Option C:\n        # mcs._creation_timestamp = datetime.datetime.utcnow()\n        # return super().__new__(mcs, name, bases, namespace)\n        #\n        # Option D:\n        # return type.__new__(mcs, name, bases, namespace) # Timestamp missing\n\nclass BaseClass(metaclass=TimestampMeta):\n    pass\n\nclass MyClass(BaseClass):\n    pass\n\n# Which implementation of `__new__` in `TimestampMeta` correctly adds\n# `_creation_timestamp` as a class attribute to `MyClass` (and any other class using this metaclass)?\n```",
+          "text": "Consider the following Python code demonstrating closure behavior:\n\n```python\ndef create_multipliers():\n    multipliers = []\n    for i in range(4):\n        multipliers.append(lambda x: x * i)\n    return multipliers\n\nfuncs = create_multipliers()\nresult = [f(2) for f in funcs]\n```\n\nWhat will be the value of `result` after execution?",
           "options": [
-            "```python\nnamespace['_creation_timestamp'] = datetime.datetime.utcnow()\nreturn super().__new__(mcs, name, bases, namespace)\n```",
-            "```python\nobj = super().__new__(mcs, name, bases, namespace)\nobj._creation_timestamp = datetime.datetime.utcnow()\nreturn obj\n```",
-            "```python\nmcs._creation_timestamp = datetime.datetime.utcnow()\nreturn super().__new__(mcs, name, bases, namespace)\n```",
-            "```python\nreturn type.__new__(mcs, name, bases, namespace)\n```"
+            "`[0, 2, 4, 6]`",
+            "`[6, 6, 6, 6]`",
+            "`[8, 8, 8, 8]`",
+            "`[0, 0, 0, 0]`"
           ],
-          "correct_answer": "```python\nnamespace['_creation_timestamp'] = datetime.datetime.utcnow()\nreturn super().__new__(mcs, name, bases, namespace)\n```",
-          "explanation": "The `__new__` method of a metaclass is responsible for *creating* the class object itself. The `namespace` argument is a dictionary that contains all the attributes and methods defined within the class body *before* the class object is actually constructed. By adding `_creation_timestamp` directly to this `namespace` dictionary, it becomes an attribute of the class object (e.g., `MyClass._creation_timestamp`) when `super().__new__` is called to construct the class. Option B would also work, but it's generally less idiomatic; modifying the `namespace` before calling `super().__new__` is the standard way to inject attributes during class creation via a metaclass. Option C is incorrect because `mcs` refers to the metaclass itself (`TimestampMeta`), not the class being created (`MyClass`). This would add the timestamp to the metaclass, not the target class. Option D simply calls the base `type.__new__` without any modification, thus failing to add the timestamp.",
+          "correct_answer": "`[6, 6, 6, 6]`",
+          "explanation": "The correct answer is `[6, 6, 6, 6]` due to Python's late binding behavior in closures. The `lambda` functions defined within the loop do not capture the value of the variable `i` at the time they are created. Instead, they capture a reference to the variable `i` from the enclosing scope. By the time the loop finishes, the value of `i` is `3`. When the functions are executed in the list comprehension, they all look up the current value of `i`, which is `3`. Therefore, each function evaluates to `2 * 3 = 6`. To capture the value at creation time, a default argument must be used:\n\n```python\nmultipliers.append(lambda x, i=i: x * i)\n```",
           "image_path": null
         },
         {

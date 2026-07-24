@@ -11,7 +11,7 @@ MongoDB has been fully removed (Phase 5.5).  The app now relies entirely on:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
-from app.api import generate_quiz, submit_answers
+from app.api import generate_quiz, submit_answers, download_report
 
 # Load environment variables
 load_dotenv()
@@ -33,6 +33,7 @@ app.add_middleware(
 # Connect the routers
 app.include_router(generate_quiz.router, prefix="/api")
 app.include_router(submit_answers.router, prefix="/api")
+app.include_router(download_report.router, prefix="/api")
 
 
 @app.get("/")

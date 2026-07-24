@@ -51,14 +51,14 @@ client_groq = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 # ─── 1. Curriculum ────────────────────────────────────────────────────────────
 
-# 🎯 TARGET MODE: Only regenerating Machine Learning — all other buckets preserved
+# 🎯 TARGET MODE: Only regenerating Data Visualization — all other buckets preserved
 SECTIONS = [
     # "SQL",
     # "Python",
     # "Pandas",
-    # "Data Visualization",
+    "Data Visualization",
     # "Applied Statistics",
-    "Machine Learning",
+    # "Machine Learning",
     # "A/B Testing",
 ]
 
@@ -69,12 +69,12 @@ LOCKED_SECTIONS = {
     "Pandas",
     "Applied Statistics",
     "A/B Testing",
-    "Data Visualization",
+    "Machine Learning",
     "meta",
 }
 
 DIFFICULTY_TARGETS = {
-    # "Easy":     8,
+    "Easy":     8,
     "Moderate": 8,
     "Advanced": 5,
 }
@@ -264,22 +264,52 @@ def validate_batch(batch: QuestionBatch, target_count: int) -> None:
 
         for field_name, field_text in [("text", q.text), ("explanation", q.explanation)]:
 
-            # 6a. Malformed inline fence
-            if re.search(r"```(?:python|sql)\s+\S", field_text):
-                raise ValueError("Malformed Markdown fence detected.")
+            def _fence_error(rule: str, match: re.Match) -> ValueError:
+                """Build a rich, debuggable fence error with context snippet."""
+                start = max(0, match.start() - 40)
+                end   = min(len(field_text), match.end() + 80)
+                snippet = repr(field_text[start:end])
+                return ValueError(
+                    f"Malformed Markdown fence detected.\n"
+                    f"\n  Question : {q.id}"
+                    f"\n  Field    : {field_name}"
+                    f"\n  Rule     : {rule}"
+                    f"\n  Snippet  : {snippet}"
+                )
 
-            # 6b. Space after language tag
-            if re.search(r"```python ", field_text) or re.search(r"```sql ", field_text):
-                raise ValueError("Malformed Markdown fence detected.")
+            # 6a. Code appears on the SAME LINE as the language tag
+            #     Matches:  ```python import ...   or   ```sql SELECT
+            #     Does NOT match: ```python\nimport ...  (newline after tag is valid)
+            m = re.search(r"```(?:python|sql)[ \t]+\S", field_text)
+            if m:
+                raise _fence_error("6a (Inline fence — code on same line as language tag)", m)
 
-            # 6c. Fence structure
-            if re.search(r"```\w+[^\n]", field_text):
-                raise ValueError("Malformed Markdown fence detected.")
+            # 6b. Trailing space immediately after language tag (before newline)
+            #     DISABLED: Explanation prose may legitimately produce trailing spaces
+            #     after a language tag in some rendering contexts; this caused false
+            #     positives for valid Data Visualization outputs.
+            # m = re.search(r"```(?:python|sql) +(?=\n|$)", field_text)
+            # if m:
+            #     raise _fence_error("6b (Trailing space after language tag)", m)
+
+            # 6c. Malformed language tag — extra characters appended to python/sql tag
+            #     Catches:  ```python2, ```sqlABC, ```pythonimport, ```sqlSELECT
+            #     Accepts:  ```python\n  ```sql\n  (newline immediately after tag = valid)
+            #     Accepts:  ```json, ```bash etc. (non-project langs ignored; only python/sql checked)
+            m = re.search(r"```(?:python|sql)(?![\n\r]|$)", field_text)
+            if m:
+                raise _fence_error("6c (Malformed language tag — unexpected characters after python/sql)", m)
 
             # 6d. Unclosed fenced blocks
             fence_count = field_text.count("```")
             if fence_count % 2 != 0:
-                raise ValueError("Malformed Markdown fence detected.")
+                raise ValueError(
+                    f"Malformed Markdown fence detected.\n"
+                    f"\n  Question : {q.id}"
+                    f"\n  Field    : {field_name}"
+                    f"\n  Rule     : 6d (Unclosed fence — odd number of ``` markers)"
+                    f"\n  Count    : {fence_count} backtick-fence markers found"
+                )
 
             # 6e. Empty Python code blocks
             for block in _extract_python_blocks(field_text):
@@ -312,9 +342,12 @@ def validate_batch(batch: QuestionBatch, target_count: int) -> None:
                 raise ValueError("Raw filename found in prose.")
 
         # 8. Image consistency — visual trigger → image_path must be set
-        combined_lower = (q.text + " " + q.explanation).lower()
+        # Only the question stem determines whether an image is required.
+        # The explanation may naturally mention visual terms (ROC curve, heatmap,
+        # etc.) without requiring an image_path.
+        text_lower = q.text.lower()
         for trigger in _VISUAL_TRIGGERS:
-            if trigger in combined_lower:
+            if trigger in text_lower:
                 if not q.image_path:
                     raise ValueError("Missing image_path for referenced visual.")
                 break
@@ -472,6 +505,27 @@ def build_prompt(section: str, difficulty: str, target_count: int) -> str:
             "  • IMAGE HANDLING: Questions referring to ROC curves, confusion matrices, learning curves, PCA plots, feature importance plots, decision boundaries, calibration plots, bias-variance plots or similar visuals MUST populate image_path. Never mention raw .png or .jpg filenames inside question text or explanations.\n"
             "  • Tables must use GitHub-Flavored Markdown only."
         )
+    elif section == "Data Visualization":
+        domain_rules = (
+            "DOMAIN ISOLATION & STYLING RULES (CRITICAL):\n"
+            "  • Focus on practical Data Visualization concepts rather than textbook definitions.\n"
+            "  • Cover chart selection, scatter plots, line charts, bar charts, histograms, boxplots, violin plots, heatmaps, pairplots, ROC curves, confusion matrices, PCA plots, residual plots, feature importance plots, calibration plots, learning curves, overplotting, color theory, perceptual design, misleading charts, matplotlib, seaborn and plotly.\n"
+            "  • Prefer real-world engineering scenarios instead of trivia.\n"
+            "  • Code snippets MUST use matplotlib.pyplot, seaborn or plotly only.\n"
+            "  • Every code snippet MUST be inside a properly fenced markdown block beginning with a fresh newline:\n"
+            "       ```python\n"
+            "       ...code...\n"
+            "       ```\n"
+            "  • Never place raw code immediately after the word 'python'.\n"
+            "  • Mathematical expressions belong in prose using LaTeX only. Never place LaTeX inside Python code.\n"
+            "  • IMAGE HANDLING:\n"
+            "      - If the user must inspect a visualization, populate image_path.\n"
+            "      - Never place filenames (.png/.jpg/.jpeg) inside the question text.\n"
+            "      - Refer naturally using phrases such as 'shown below', 'displayed below', or 'shown in the figure'.\n"
+            "      - Use deterministic filenames such as: dataviz_easy_q2_histogram.png, dataviz_advanced_q1_roc_curve.png.\n"
+            "  • Multi-line code belongs ONLY in the question stem or explanation. Never place full code blocks inside answer options. Small inline code such as `ax.set_xscale('log')` is acceptable inside options.\n"
+            "  • Tables must use GitHub-Flavored Markdown only."
+        )
     else:
         domain_rules = (
             f"Focus deeply on realistic, scenario-based {section} problems that a "
@@ -626,30 +680,51 @@ def generate_batch(section: str, difficulty: str, target_count: int) -> Question
     """
     prompt = build_prompt(section, difficulty, target_count)
 
+    # ── Per-model validation retry limits ──────────────────────────────────────
+    _GEMINI_MAX_ATTEMPTS: dict[str, int] = {
+        "gemini-3.5-flash":      3,
+        "gemini-2.5-flash":      3,
+        "gemini-2.5-flash-lite": 2,
+    }
+
     # ── Try each Gemini tier ──
     for model_id, label in GEMINI_MODELS:
-        print(f"  🔷 Trying {label} …")
-        try:
-            response = client.models.generate_content(
-                model=model_id,
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=QuestionBatch,
-                    temperature=0.7,
-                ),
-            )
-            batch = QuestionBatch.model_validate_json(response.text)
-            print(f"  ✅ {label} succeeded — {len(batch.questions)} questions generated.")
-            # ── Validation guardrail ──
-            validate_batch(batch, target_count)
-            return batch
-        except ValueError as val_err:
-            print(f"  ⚠  Validation failed:\n     {val_err}\n     Retrying…")
-            time.sleep(SLEEP_SECONDS)
-        except Exception as exc:
-            print(f"  ⚠️  {label} failed: {exc}")
-            time.sleep(SLEEP_SECONDS)
+        max_attempts = _GEMINI_MAX_ATTEMPTS.get(model_id, 3)
+
+        for attempt in range(1, max_attempts + 1):
+            print(f"\n  🔷 {label}\n     Attempt {attempt}/{max_attempts}")
+            try:
+                response = client.models.generate_content(
+                    model=model_id,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_mime_type="application/json",
+                        response_schema=QuestionBatch,
+                        temperature=0.7,
+                    ),
+                )
+                response_text = response.text
+                if not response_text:
+                    raise ValueError("Empty response from Gemini API")
+                batch = QuestionBatch.model_validate_json(response_text)
+                print(f"  ✅ {label} succeeded — {len(batch.questions)} questions generated.")
+                # ── Validation guardrail ──
+                validate_batch(batch, target_count)
+                return batch
+            except ValueError as val_err:
+                # Validation failure → retry the SAME model
+                print(f"\n  ⚠  Validation failed:\n     {val_err}")
+                if attempt < max_attempts:
+                    print(f"\n     Retrying {label}...")
+                    time.sleep(SLEEP_SECONDS)
+                else:
+                    print("\n  ⛔ Validation retries exhausted.\n     Switching to next Gemini model...")
+                    time.sleep(SLEEP_SECONDS)
+            except Exception as exc:
+                # Infrastructure/API failure → skip remaining retries for this model
+                print(f"  ⚠️  {label} failed: {exc}")
+                time.sleep(SLEEP_SECONDS)
+                break  # move directly to the next model tier
 
     # ── Tier-4: Groq fallback ──
     if client_groq:
@@ -661,6 +736,7 @@ def generate_batch(section: str, difficulty: str, target_count: int) -> Question
                 response_format={"type": "json_object"},
                 temperature=0.7,
             )
+            raw = ""  # pre-initialize so except handlers can always reference it
             raw = chat.choices[0].message.content
             
             # ── Minimal normalization step ──
@@ -690,7 +766,15 @@ def generate_batch(section: str, difficulty: str, target_count: int) -> Question
             if isinstance(parsed_raw, dict):
                 parsed_raw["section_name"] = section
                 parsed_raw["difficulty"] = difficulty
-            
+
+            # Normalize Groq's common hallucinated field names at the question level
+            if "questions" in parsed_raw:
+                for q in parsed_raw["questions"]:
+                    if "question" in q and "text" not in q:
+                        q["text"] = q.pop("question")
+                    if "answer" in q and "correct_answer" not in q:
+                        q["correct_answer"] = q.pop("answer")
+
             try:
                 batch = QuestionBatch.model_validate(parsed_raw)
                 print(f"  ✅ Groq succeeded — {len(batch.questions)} questions generated.")
