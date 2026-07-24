@@ -190,12 +190,13 @@ async def submit_answers_endpoint(submission: QuizSubmission):
             total_wrong     = len(submission.wrong_answers)
             total_correct   = max(0, total_answered - total_wrong)
 
-            pdf_path = generate_pdf_report(
+            pdf_path = await generate_pdf_report(
                 markdown_text   = report_markdown,
                 candidate_name  = submission.name or "Candidate",
                 weighted_score  = submission.score,
                 total_correct   = total_correct,
                 total_questions = total_answered,
+                section_scores  = submission.section_scores or {},
             )
             if pdf_path:
                 # Return only the filename — never expose server paths to the client

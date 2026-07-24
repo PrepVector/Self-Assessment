@@ -24,7 +24,12 @@ _BACKEND_DIR  = _API_DIR.parent.parent                    # backend/
 _REPORTS_DIR  = _BACKEND_DIR / "generated_reports"
 
 # Only allow filenames that look like our generated reports — no traversal tricks
-_SAFE_FILENAME = re.compile(r"^assessment_report_\d{8}_\d{6}\.pdf$")
+# Accept both legacy timestamp pattern AND new candidate-name pattern:
+#   assessment_report_YYYYMMDD_HHMMSS.pdf
+#   {Name}_Self-Assessment_Report.pdf  (only word chars, hyphens, underscores)
+_SAFE_FILENAME = re.compile(
+    r"^(?:assessment_report_\d{8}_\d{6}|[\w\-]+_Self-Assessment_Report)\.pdf$"
+)
 
 
 @router.get("/download-report/{filename}")
@@ -39,7 +44,11 @@ async def download_report(filename: str):
     if not _SAFE_FILENAME.match(filename):
         raise HTTPException(
             status_code=400,
-            detail="Invalid report filename. Expected format: assessment_report_YYYYMMDD_HHMMSS.pdf",
+            detail=(
+                "Invalid report filename. Expected formats: "
+                "'assessment_report_YYYYMMDD_HHMMSS.pdf' or "
+                "'{Name}_Self-Assessment_Report.pdf'"
+            ),
         )
 
     # 2. Resolve the full path inside the known reports directory
