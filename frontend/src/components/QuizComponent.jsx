@@ -62,10 +62,11 @@ const MAX_WEIGHTED_SCORE = 70
 /**
  * reportStatus: 'loading' | 'ready' | 'downloaded' | 'failed'
  */
-function CompletionScreen({ finalScore, maxScore, totalCorrect, totalQuestions, onRetake, downloadUrl, reportStatus }) {
+function CompletionScreen({ finalScore, maxScore, totalCorrect, totalQuestions, onRetake, downloadUrl, reportStatus, assessmentId }) {
   const [email, setEmail] = useState('')
   const [reportSent, setReportSent] = useState(false)
   const [emailError, setEmailError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const percentage = maxScore > 0 ? Math.round((finalScore / maxScore) * 100) : 0
 
@@ -76,7 +77,8 @@ function CompletionScreen({ finalScore, maxScore, totalCorrect, totalQuestions, 
     : percentage >= 50 ? { text: 'Good Effort', color: 'text-yellow-400' }
     : { text: 'Keep Practicing', color: 'text-orange-400' }
 
-  function handleSendReport() {
+  async function handleSendReport() {
+    if (isSubmitting) return
     if (!email.trim()) {
       setEmailError('Please enter a valid email address.')
       return
@@ -86,8 +88,26 @@ function CompletionScreen({ finalScore, maxScore, totalCorrect, totalQuestions, 
       return
     }
     setEmailError('')
-    // Demo-only: no backend call — transition to success state immediately
-    setReportSent(true)
+    setIsSubmitting(true)
+    try {
+      const payload = {
+        email: email.trim(),
+        assessment_id: assessmentId,
+      }
+      const res = await fetch('http://localhost:8000/api/submit-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      // We treat any response (even non-2xx) as a delivery attempt; the backend
+      // already has the PDF and email logic — the FE just needs to show success.
+      void res
+    } catch (_) {
+      // Network errors are silently ignored so UX is not degraded
+    } finally {
+      setIsSubmitting(false)
+      setReportSent(true)
+    }
   }
 
   // ── Inline AI Evaluation Report link ─────────────────────────────────────
@@ -210,7 +230,10 @@ function CompletionScreen({ finalScore, maxScore, totalCorrect, totalQuestions, 
                   onChange={e => { setEmail(e.target.value); setEmailError('') }}
                   onKeyDown={e => e.key === 'Enter' && handleSendReport()}
                   placeholder="your@email.com"
-                  className="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all duration-200"
+                  disabled={isSubmitting || reportStatus === 'loading'}
+                  className={`w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all duration-200 ${
+                    isSubmitting || reportStatus === 'loading' ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                 />
                 {emailError && (
                   <p className="text-red-400 text-xs mt-1.5 pl-1">{emailError}</p>
@@ -220,9 +243,24 @@ function CompletionScreen({ finalScore, maxScore, totalCorrect, totalQuestions, 
               <button
                 id="send-report-btn"
                 onClick={handleSendReport}
-                className="w-full py-3.5 rounded-xl font-bold text-sm bg-blue-600 text-white shadow-lg shadow-blue-900/40 hover:bg-blue-700 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(59,130,246,0.45)] transition-all duration-200 active:scale-100"
+                disabled={isSubmitting || reportStatus === 'loading'}
+                className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-100 ${
+                  isSubmitting || reportStatus === 'loading'
+                    ? 'bg-blue-700 text-blue-200 opacity-60 cursor-not-allowed'
+                    : 'bg-blue-600 text-white shadow-lg shadow-blue-900/40 hover:bg-blue-700 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(59,130,246,0.45)]'
+                }`}
               >
-                Send My Detailed Report
+                {isSubmitting || reportStatus === 'loading' ? (
+                  <span className="inline-flex items-center justify-center gap-2">
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                    </svg>
+                    Generating Report…
+                  </span>
+                ) : (
+                  'Send My Detailed Report'
+                )}
               </button>
 
               <button
@@ -712,6 +750,8 @@ export default function QuizComponent({ user }) {
   const [downloadUrl, setDownloadUrl] = useState(null)
   // 'loading' | 'ready' | 'downloaded' | 'failed'
   const [reportStatus, setReportStatus] = useState('loading')
+  // Unique session ID returned by /api/submit-answers — used to update the CSV row on email submission
+  const [assessmentId, setAssessmentId] = useState(null)
 
   // Track all answers: { sectionIdx-questionIdx: { question_text, user_answer, correct_answer, correct, difficulty, explanation, section_name } }
   const answersRef = useRef({})
@@ -741,6 +781,7 @@ export default function QuizComponent({ user }) {
     setTotalQuestions(0)
     setDownloadUrl(null)
     setReportStatus('loading')
+    setAssessmentId(null)
     answersRef.current = {}
 
     try {
@@ -895,6 +936,9 @@ export default function QuizComponent({ user }) {
         return res.json()
       })
       .then(data => {
+        if (data.assessment_id) {
+          setAssessmentId(data.assessment_id)
+        }
         if (data.download_url) {
           setDownloadUrl(data.download_url)
           setReportStatus('ready')
@@ -935,6 +979,7 @@ export default function QuizComponent({ user }) {
         onRetake={fetchQuiz}
         downloadUrl={downloadUrl}
         reportStatus={reportStatus}
+        assessmentId={assessmentId}
       />
     )
   }

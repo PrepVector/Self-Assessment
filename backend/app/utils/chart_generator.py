@@ -12,11 +12,16 @@ generate_score_chart_base64(section_scores, avg_scores) -> str
 
 Design notes
 ------------
-- Blue (#3B82F6) bars for the candidate, light-gray (#D1D5DB) for benchmark.
-- Clean white background, no chart junk.
-- A summary table is rendered below the bars showing:
-      Section | Score | Benchmark | Delta
-- plt.close() is called after encoding to prevent memory leaks.
+Candidate-Only mode (avg_scores is None or empty):
+  - Each bar is dynamically coloured by get_score_color() from report_defaults.
+  - No legend (redundant when there is only one dataset).
+
+Comparison mode (avg_scores provided):
+  - Candidate bars are uniform #3B82F6; benchmark bars are #D1D5DB.
+  - Legend is shown.
+  - A summary delta table is rendered below the bars.
+
+plt.close() is always called to prevent memory leaks.
 """
 
 from __future__ import annotations
@@ -33,10 +38,12 @@ import matplotlib.patches as mpatches
 from matplotlib.gridspec import GridSpec
 import numpy as np
 
+from app.config.report_defaults import get_score_color
+
 
 # ─── Colour palette ──────────────────────────────────────────────────────────
 
-_BLUE      = "#3B82F6"   # candidate bars
+_BLUE      = "#3B82F6"   # uniform candidate bars (comparison mode)
 _GRAY      = "#D1D5DB"   # benchmark bars
 _BG        = "#FFFFFF"   # figure background
 _GRID_CLR  = "#F1F5F9"   # very light grid lines
@@ -44,7 +51,7 @@ _TEXT_DARK = "#1E293B"   # axis labels / titles
 _TEXT_MED  = "#64748B"   # secondary text
 _ACCENT    = "#EFF6FF"   # table header background
 
-# Maximum weighted score per section (2x1 + 2x2 + 1x4 = 10 pts)
+# Maximum weighted score per section (2×1 + 2×2 + 1×4 = 10 pts)
 _MAX_PER_SECTION = 10
 
 
@@ -64,10 +71,13 @@ def generate_score_chart_base64(
     Parameters
     ----------
     section_scores : dict[str, int | float]
-        Candidate's weighted score per section, e.g. {"SQL": 8, "Python": 6, ...}.
+        Candidate's weighted score per section, e.g. {"SQL": 8, "Python": 6}.
     avg_scores : dict[str, int | float] | None
-        Benchmark (cohort average) score per section.  If None or empty, only
-        the candidate's bars are rendered (no benchmark overlay).
+        Benchmark (cohort average) score per section.
+        - If None or empty  →  Candidate-Only mode: dynamic per-bar colours,
+                               no legend.
+        - If provided       →  Comparison mode: uniform blue vs gray bars,
+                               legend shown, delta table added below.
 
     Returns
     -------
@@ -75,7 +85,7 @@ def generate_score_chart_base64(
         "data:image/png;base64,<encoded bytes>"
     """
     if not section_scores:
-        # Return a 1x1 transparent PNG as a safe fallback
+        # 1×1 transparent PNG — safe fallback
         return (
             "data:image/png;base64,"
             "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk"
@@ -91,7 +101,7 @@ def generate_score_chart_base64(
     has_avg   = any(v > 0 for v in avg_vals)
 
     # ── Figure layout ────────────────────────────────────────────────────────
-    fig_h = 6.8 if has_avg else 5.4
+    fig_h = 6.8 if has_avg else 5.0
     fig   = plt.figure(figsize=(11, fig_h), facecolor=_BG, dpi=130)
 
     if has_avg:
@@ -100,7 +110,7 @@ def generate_score_chart_base64(
         ax  = fig.add_subplot(gs[0])
         ax2 = fig.add_subplot(gs[1])
     else:
-        gs  = GridSpec(1, 1, figure=fig, left=0.08, right=0.97, top=0.88, bottom=0.10)
+        gs  = GridSpec(1, 1, figure=fig, left=0.08, right=0.97, top=0.88, bottom=0.12)
         ax  = fig.add_subplot(gs[0])
         ax2 = None
 
@@ -109,24 +119,28 @@ def generate_score_chart_base64(
     width = 0.38 if has_avg else 0.52
 
     if has_avg:
+        # Comparison mode — uniform colours + legend
         bars_avg  = ax.bar(x - width / 2, avg_vals,  width, color=_GRAY, zorder=3,
                            label="Benchmark Avg", linewidth=0)
         bars_cand = ax.bar(x + width / 2, cand_vals, width, color=_BLUE, zorder=3,
                            label="Your Score",    linewidth=0)
     else:
-        bars_cand = ax.bar(x, cand_vals, width, color=_BLUE, zorder=3,
-                           label="Your Score", linewidth=0)
+        # Candidate-Only mode — dynamic per-bar colours, no legend
+        bar_colors = [get_score_color(v) for v in cand_vals]
+        bars_cand  = ax.bar(x, cand_vals, width, color=bar_colors, zorder=3, linewidth=0)
 
-    # Value labels on top of each bar
-    for bar in bars_cand:
-        h = bar.get_height()
+    # Value labels on top of candidate bars
+    for bar, val in zip(bars_cand, cand_vals):
+        label_color = _BLUE if has_avg else get_score_color(val)
         ax.text(
             bar.get_x() + bar.get_width() / 2,
-            h + 0.15,
-            f"{h:.0f}",
+            val + 0.15,
+            f"{val:.0f}",
             ha="center", va="bottom",
-            fontsize=8, fontweight="bold", color=_BLUE,
+            fontsize=8, fontweight="bold", color=label_color,
         )
+
+    # Value labels on benchmark bars
     if has_avg:
         for bar in bars_avg:
             h = bar.get_height()
@@ -156,27 +170,27 @@ def generate_score_chart_base64(
     for spine in ax.spines.values():
         spine.set_visible(False)
 
-    # ── Chart title & legend ─────────────────────────────────────────────────
-    total_cand = sum(cand_vals)
-    total_poss = n * _MAX_PER_SECTION
+    # ── Chart title ───────────────────────────────────────────────────────────
     fig.suptitle(
-        f"Section Performance Overview  |  Total: {total_cand:.0f} / {total_poss}",
+        "Section-wise Performance",
         x=0.52, y=0.97,
         fontsize=12, fontweight="bold", color=_TEXT_DARK,
     )
 
-    legend_handles = [mpatches.Patch(color=_BLUE, label="Your Score")]
+    # ── Legend (comparison mode only) ────────────────────────────────────────
     if has_avg:
-        legend_handles.append(mpatches.Patch(color=_GRAY, label="Benchmark Avg"))
+        legend_handles = [
+            mpatches.Patch(color=_BLUE, label="Your Score"),
+            mpatches.Patch(color=_GRAY, label="Benchmark Avg"),
+        ]
+        ax.legend(
+            handles=legend_handles,
+            loc="upper right", fontsize=8,
+            frameon=True, framealpha=0.85,
+            edgecolor=_GRID_CLR,
+        )
 
-    ax.legend(
-        handles=legend_handles,
-        loc="upper right", fontsize=8,
-        frameon=True, framealpha=0.85,
-        edgecolor=_GRID_CLR,
-    )
-
-    # ── Summary table (only when benchmark data is present) ──────────────────
+    # ── Summary delta table (comparison mode only) ────────────────────────────
     if has_avg and ax2 is not None:
         ax2.set_facecolor(_BG)
         ax2.axis("off")
@@ -184,9 +198,9 @@ def generate_score_chart_base64(
         col_labels = ["Section", "Your Score", "Benchmark", "Delta"]
         table_data = []
         for s in sections:
-            cval  = float(section_scores.get(s, 0))
-            aval  = float(avg_scores.get(s, 0))
-            delta = cval - aval
+            cval      = float(section_scores.get(s, 0))
+            aval      = float(avg_scores.get(s, 0))
+            delta     = cval - aval
             delta_str = f"+{delta:.1f}" if delta >= 0 else f"{delta:.1f}"
             table_data.append([s, f"{cval:.0f} / {_MAX_PER_SECTION}", f"{aval:.1f}", delta_str])
 
@@ -200,21 +214,18 @@ def generate_score_chart_base64(
         tbl.auto_set_font_size(False)
         tbl.set_fontsize(7.5)
 
-        # Style header row
         for col_idx in range(len(col_labels)):
             cell = tbl[0, col_idx]
             cell.set_facecolor(_ACCENT)
             cell.set_text_props(fontweight="bold", color=_TEXT_DARK)
             cell.set_edgecolor(_GRID_CLR)
 
-        # Style data rows
         for row_idx in range(1, len(table_data) + 1):
             for col_idx in range(len(col_labels)):
                 cell = tbl[row_idx, col_idx]
                 cell.set_facecolor(_BG)
                 cell.set_edgecolor(_GRID_CLR)
                 cell.set_text_props(color=_TEXT_DARK)
-                # Colour the delta column green/red
                 if col_idx == 3:
                     raw_delta = (
                         float(section_scores.get(sections[row_idx - 1], 0))
@@ -230,7 +241,7 @@ def generate_score_chart_base64(
     plt.savefig(buf, format="png", bbox_inches="tight", facecolor=_BG)
     buf.seek(0)
     encoded = base64.b64encode(buf.read()).decode("utf-8")
-    plt.close(fig)   # Prevent memory leaks — critical for long-running servers
+    plt.close(fig)   # Critical: prevent memory leaks in long-running servers
     buf.close()
 
     return f"data:image/png;base64,{encoded}"
