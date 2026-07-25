@@ -156,28 +156,7 @@ def _build_csv_row(submission: QuizSubmission, assessment_id: str) -> dict:
     return row
 
 
-def _update_csv_email(assessment_id: str, email: str) -> None:
-    """Finds the row matching assessment_id in the CSV and updates its email field."""
-    _ensure_csv()
-    rows: list[dict] = []
-    updated = False
 
-    with open(_CSV_PATH, "r", newline="", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            if row.get("assessment_id") == assessment_id:
-                row["email"] = email
-                updated = True
-            rows.append(row)
-
-    if updated:
-        with open(_CSV_PATH, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=_CSV_HEADERS, extrasaction="ignore")
-            writer.writeheader()
-            writer.writerows(rows)
-        print(f"[submit_answers] ✅  Email updated in CSV for assessment_id={assessment_id}")
-    else:
-        print(f"[submit_answers] ⚠️  assessment_id={assessment_id} not found in CSV — email not written")
 
 # ─── Endpoint ─────────────────────────────────────────────────────────────────
 
@@ -190,18 +169,49 @@ class EmailPayload(BaseModel):
 
 @router.post("/submit-email")
 async def submit_email_endpoint(payload: EmailPayload):
-    """
-    Accepts an email address + assessment_id.
-    1. Updates the matching CSV row's email field.
-    2. Sends the PDF report to the provided email address (if a download_url exists).
-    """
-    # 1. Update CSV row — wrapped in try/except so the email still gets sent on failure
-    try:
-        _update_csv_email(payload.assessment_id, payload.email.strip())
-    except Exception as exc:
-        print(f"[submit_answers] ⚠️  CSV email update failed (non-fatal): {exc}")
+    candidate_name = "Candidate"
+    _ensure_csv()
+    rows = []
+    updated = False
 
-    return {"status": "ok", "message": "Email received. Report will be sent if available."}
+    # 1. Update CSV and capture the candidate's name
+    with open(_CSV_PATH, "r", newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row.get("assessment_id") == payload.assessment_id:
+                row["email"] = payload.email.strip()
+                candidate_name = row.get("name", "Candidate")
+                updated = True
+            rows.append(row)
+
+    if updated:
+        with open(_CSV_PATH, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=_CSV_HEADERS, extrasaction="ignore")
+            writer.writeheader()
+            writer.writerows(rows)
+        print(f"[submit_email] ✅ Email updated in CSV for assessment_id={payload.assessment_id}")
+    else:
+        print(f"[submit_email] ⚠️ assessment_id={payload.assessment_id} not found in CSV")
+
+    # 2. Reconstruct PDF path and dispatch email
+    safe_name = candidate_name.replace(" ", "_")
+    pdf_filename = f"{safe_name}_Self-Assessment_Report.pdf"
+    pdf_path = _REPORTS_DIR / pdf_filename
+
+    if pdf_path.exists():
+        try:
+            await send_report_email(
+                to_email=payload.email.strip(),
+                candidate_name=candidate_name,
+                pdf_path=str(pdf_path)
+            )
+            print(f"[submit_email] ✅ Report emailed successfully to {payload.email.strip()}")
+        except Exception as exc:
+            print(f"[submit_email] ⚠️ Email delivery failed: {exc}")
+    else:
+        print(f"[submit_email] ⚠️ Could not find PDF to email at {pdf_path}")
+
+    return {"status": "ok", "message": "Email processed."}
 
 
 @router.post("/submit-answers")
@@ -274,19 +284,7 @@ async def submit_answers_endpoint(submission: QuizSubmission):
                 filename = pathlib.Path(pdf_path).name
                 download_url = f"/api/download-report/{filename}"
 
-                # 3a. Send report via email (non-blocking; failure is safe)
-                candidate_email = (submission.email or "").strip()
-                if candidate_email:
-                    try:
-                        await send_report_email(
-                            to_email       = candidate_email,
-                            candidate_name = submission.name or "Candidate",
-                            pdf_path       = pdf_path,
-                        )
-                    except Exception as email_exc:
-                        print(
-                            f"[submit_answers] ⚠️  Email delivery failed (non-fatal): {email_exc}"
-                        )
+
     except Exception as pdf_exc:
         print(f"[submit_answers] ⚠️  PDF generation failed (non-fatal): {pdf_exc}")
 

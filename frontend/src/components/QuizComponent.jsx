@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import Confetti from 'react-confetti'
 import ReactMarkdown from 'react-markdown'
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
@@ -67,14 +68,28 @@ function CompletionScreen({ finalScore, maxScore, totalCorrect, totalQuestions, 
   const [reportSent, setReportSent] = useState(false)
   const [emailError, setEmailError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showConfetti, setShowConfetti] = useState(true)
+  const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight })
+
+  // Keep window size in sync for confetti canvas
+  useEffect(() => {
+    function onResize() { setWindowSize({ width: window.innerWidth, height: window.innerHeight }) }
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  // Stop recycling confetti after 5 s — existing particles fall off gracefully
+  useEffect(() => {
+    const id = setTimeout(() => setShowConfetti(false), 10000)
+    return () => clearTimeout(id)
+  }, [])
 
   const percentage = maxScore > 0 ? Math.round((finalScore / maxScore) * 100) : 0
 
   // Determine a motivating tier message
   const tierLabel =
-    percentage >= 85 ? { text: 'Outstanding Performance', color: 'text-green-400' }
-    : percentage >= 70 ? { text: 'Strong Performance', color: 'text-blue-400' }
-    : percentage >= 50 ? { text: 'Good Effort', color: 'text-yellow-400' }
+    percentage >= 75 ? { text: 'Excellent Work!', color: 'text-green-400' }
+    : percentage >= 50 ? { text: 'Great Effort!', color: 'text-blue-500' }
     : { text: 'Keep Practicing', color: 'text-orange-400' }
 
   async function handleSendReport() {
@@ -140,21 +155,46 @@ function CompletionScreen({ finalScore, maxScore, totalCorrect, totalQuestions, 
       )
     }
 
-    // 'ready' — clickable download link
+    // 'ready' — styled text only, no download functionality
     return (
-      <a
-        href={`http://localhost:8000${downloadUrl}`}
-        download
-        className="text-blue-400 font-semibold underline underline-offset-2 cursor-pointer hover:text-blue-300 transition-colors duration-150"
+      <span
+        className="text-blue-400 font-semibold underline underline-offset-2"
         id="ai-report-download-link"
       >
         AI Evaluation Report
-      </a>
+      </span>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-6 py-16">
+    <div className="relative min-h-screen bg-gray-950 flex flex-col items-center justify-center px-6 py-16 overflow-x-hidden">
+      <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+        <Confetti
+          width={windowSize.width}
+          height={windowSize.height}
+          recycle={showConfetti}
+          numberOfPieces={220}
+          gravity={0.18}
+        />
+      </div>
+
+      {/* Absolute positioned Back to Home Navigation */}
+      <div className="absolute top-6 left-6 md:top-8 md:left-8 z-40">
+        <button
+          onClick={() => window.location.href = '/'}
+          className="flex items-center gap-2 text-gray-400 font-medium text-sm transition-all duration-300 hover:-translate-x-1 hover:text-blue-500 group focus:outline-none"
+        >
+          <span className="tracking-wide">&laquo; Back to Home</span>
+          {/* Neon Azure Home SVG - Scaled Down */}
+          <div className="flex items-center justify-center w-6 h-6 rounded-md bg-gray-800/80 border border-gray-700 transition-all duration-300 group-hover:bg-blue-900/30 group-hover:border-blue-500/50 group-hover:drop-shadow-[0_0_8px_rgba(59,130,246,0.6)]">
+            <svg className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-400 transition-colors duration-300" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline strokeLinecap="round" strokeLinejoin="round" points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+          </div>
+        </button>
+      </div>
+
       <LogoMark />
 
       {/* Glow backdrop */}
@@ -250,13 +290,13 @@ function CompletionScreen({ finalScore, maxScore, totalCorrect, totalQuestions, 
                     : 'bg-blue-600 text-white shadow-lg shadow-blue-900/40 hover:bg-blue-700 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(59,130,246,0.45)]'
                 }`}
               >
-                {isSubmitting || reportStatus === 'loading' ? (
+                {isSubmitting ? (
                   <span className="inline-flex items-center justify-center gap-2">
                     <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                     </svg>
-                    Generating Report…
+                    Sending Report…
                   </span>
                 ) : (
                   'Send My Detailed Report'

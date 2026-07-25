@@ -1,17 +1,17 @@
 import { useState } from 'react'
 
 const navLinks = [
-  { label: 'Home', href: '#hero' },
-  { label: 'Features', href: '#features' },
+  { label: 'Home',         href: '#hero' },
+  { label: 'Features',     href: '#features' },
   { label: 'How It Works', href: '#how-it-works' },
-  { label: 'Contact', href: '#contact' },
+  { label: 'FAQs',         href: '#faqs' },
+  { label: 'Contact',      href: '#contact' },
 ]
 
-export default function Navbar({ user, isLoggedIn, onOpenSignIn, onStartAssessment }) {
+export default function Navbar({ user, onStartAssessment }) {
   const [menuOpen, setMenuOpen] = useState(false)
 
   function handleNavLinkClick(e, href) {
-    // Smooth-scroll to anchor sections
     e.preventDefault()
     const target = document.querySelector(href)
     if (target) {
@@ -58,34 +58,24 @@ export default function Navbar({ user, isLoggedIn, onOpenSignIn, onStartAssessme
           ))}
         </ul>
 
-        {/* CTA buttons */}
+        {/* CTA — desktop */}
         <div className="hidden md:flex items-center gap-3">
-          {isLoggedIn ? (
-            /* Logged-in: show avatar + name */
+          {user?.name ? (
+            /* Active candidate: show avatar + name */
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full bg-blue-600 text-white text-sm font-bold flex items-center justify-center select-none shadow">
-                {user?.name?.charAt(0).toUpperCase() || '?'}
+                {user.name.charAt(0).toUpperCase()}
               </div>
-              <span className="text-sm font-medium text-gray-700">{user?.name}</span>
+              <span className="text-sm font-medium text-gray-700">{user.name}</span>
             </div>
           ) : (
-            /* Logged-out: Sign In + Get Started */
-            <>
-              <button
-                id="navbar-signin-btn"
-                onClick={onOpenSignIn}
-                className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors duration-200 px-3 py-1.5"
-              >
-                Sign In
-              </button>
-              <button
-                id="navbar-get-started-btn"
-                onClick={onStartAssessment}
-                className="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg shadow transition-all duration-200 hover:shadow-md hover:scale-105"
-              >
-                Get Started
-              </button>
-            </>
+            <button
+              id="navbar-get-started-btn"
+              onClick={onStartAssessment}
+              className="text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg shadow transition-all duration-200 hover:shadow-md hover:scale-105"
+            >
+              Get Started
+            </button>
           )}
         </div>
 
@@ -117,29 +107,22 @@ export default function Navbar({ user, isLoggedIn, onOpenSignIn, onStartAssessme
               {link.label}
             </a>
           ))}
-          <div className="flex flex-col gap-2 pt-3 border-t border-gray-100">
-            {isLoggedIn ? (
+          <div className="pt-3 border-t border-gray-100">
+            {user?.name ? (
               <div className="flex items-center gap-2 py-1">
                 <div className="w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center">
-                  {user?.name?.charAt(0).toUpperCase() || '?'}
+                  {user.name.charAt(0).toUpperCase()}
                 </div>
-                <span className="text-sm text-gray-700 font-medium">{user?.name}</span>
+                <span className="text-sm text-gray-700 font-medium">{user.name}</span>
               </div>
             ) : (
-              <>
-                <button
-                  onClick={() => { onOpenSignIn(); setMenuOpen(false) }}
-                  className="text-sm font-medium text-gray-600 py-2 text-left hover:text-blue-600 transition-colors"
-                >
-                  Sign In
-                </button>
-                <button
-                  onClick={() => { onStartAssessment(); setMenuOpen(false) }}
-                  className="text-sm font-semibold text-white bg-blue-600 px-4 py-2 rounded-lg"
-                >
-                  Get Started
-                </button>
-              </>
+              <button
+                id="navbar-get-started-mobile-btn"
+                onClick={() => { onStartAssessment(); setMenuOpen(false) }}
+                className="w-full text-sm font-semibold text-white bg-blue-600 px-4 py-2 rounded-lg text-center"
+              >
+                Get Started
+              </button>
             )}
           </div>
         </div>

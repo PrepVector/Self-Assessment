@@ -1,15 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 
-export default function AuthModal({ mode, onClose, onSuccess }) {
-  // mode: 'signin' | 'signup'
-  const [currentMode, setCurrentMode] = useState(mode)
-  const [name, setName] = useState('')
-  const [email, setEmail] = useState('')
-  const [error, setError] = useState('')
+export default function AuthModal({ onClose, onSuccess }) {
+  const [firstName, setFirstName] = useState('')
+  const [lastName,  setLastName]  = useState('')
+  const [error,     setError]     = useState('')
   const backdropRef = useRef(null)
-
-  // Sync mode prop changes (e.g., Navbar switches from signin → signup)
-  useEffect(() => { setCurrentMode(mode) }, [mode])
 
   // Close on Escape key
   useEffect(() => {
@@ -32,27 +27,23 @@ export default function AuthModal({ mode, onClose, onSuccess }) {
     e.preventDefault()
     setError('')
 
-    const trimmedEmail = email.trim()
-    if (!trimmedEmail || !/\S+@\S+\.\S+/.test(trimmedEmail)) {
-      setError('Please enter a valid email address.')
+    const trimFirst = firstName.trim()
+    const trimLast  = lastName.trim()
+
+    if (!trimFirst) {
+      setError('Please enter your first name.')
       return
     }
-    if (currentMode === 'signup') {
-      const trimmedName = name.trim()
-      if (!trimmedName) {
-        setError('Please enter your full name.')
-        return
-      }
-      onSuccess({ name: trimmedName, email: trimmedEmail })
-    } else {
-      // Sign In — just needs email; derive a display name from it
-      const derivedName = trimmedEmail.split('@')[0]
-      onSuccess({ name: derivedName, email: trimmedEmail })
+    if (!trimLast) {
+      setError('Please enter your last name.')
+      return
     }
+
+    // Concatenate for downstream quiz & PDF generator (expects a single name string)
+    const fullName = `${trimFirst} ${trimLast}`
+    onSuccess({ name: fullName })
     onClose()
   }
-
-  const isSignUp = currentMode === 'signup'
 
   return (
     <div
@@ -62,7 +53,7 @@ export default function AuthModal({ mode, onClose, onSuccess }) {
       style={{ backdropFilter: 'blur(8px)', backgroundColor: 'rgba(0,0,0,0.5)' }}
       role="dialog"
       aria-modal="true"
-      aria-label={isSignUp ? 'Sign up dialog' : 'Sign in dialog'}
+      aria-label="Begin assessment dialog"
     >
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-[fadeInScale_0.2s_ease-out]">
 
@@ -84,71 +75,53 @@ export default function AuthModal({ mode, onClose, onSuccess }) {
           {/* Header */}
           <div className="mb-7">
             <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-4">
+              {/* Clipboard / assessment icon */}
               <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
             <h2 className="text-2xl font-extrabold text-gray-900">
-              {isSignUp ? 'Create your account' : 'Welcome back'}
+              Begin Your Assessment
             </h2>
             <p className="text-sm text-gray-500 mt-1">
-              {isSignUp
-                ? 'Sign up to start your personalized assessment.'
-                : 'Sign in to access your assessment and reports.'}
+              Enter your details to personalize your AI assessment.
             </p>
-          </div>
-
-          {/* Mode toggle tabs */}
-          <div className="flex rounded-lg bg-gray-100 p-1 mb-6">
-            {['signup', 'signin'].map((m) => (
-              <button
-                key={m}
-                onClick={() => { setCurrentMode(m); setError('') }}
-                className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${
-                  currentMode === m
-                    ? 'bg-white text-blue-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {m === 'signup' ? 'Sign Up' : 'Sign In'}
-              </button>
-            ))}
           </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-            {/* Name field — only for Sign Up */}
-            {isSignUp && (
-              <div>
-                <label htmlFor="auth-name" className="block text-sm font-medium text-gray-700 mb-1.5">
-                  Full Name
-                </label>
-                <input
-                  id="auth-name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Alex Johnson"
-                  autoFocus
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 bg-gray-50
-                    focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white
-                    transition-all duration-200"
-                />
-              </div>
-            )}
 
-            {/* Email field */}
+            {/* First Name */}
             <div>
-              <label htmlFor="auth-email" className="block text-sm font-medium text-gray-700 mb-1.5">
-                Email Address
+              <label htmlFor="intake-first-name" className="block text-sm font-medium text-gray-700 mb-1.5">
+                First Name
               </label>
               <input
-                id="auth-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                autoFocus={!isSignUp}
+                id="intake-first-name"
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="e.g. Alex"
+                autoFocus
+                autoComplete="given-name"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 bg-gray-50
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white
+                  transition-all duration-200"
+              />
+            </div>
+
+            {/* Last Name */}
+            <div>
+              <label htmlFor="intake-last-name" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Last Name
+              </label>
+              <input
+                id="intake-last-name"
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="e.g. Johnson"
+                autoComplete="family-name"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm text-gray-900 placeholder-gray-400 bg-gray-50
                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white
                   transition-all duration-200"
@@ -165,8 +138,9 @@ export default function AuthModal({ mode, onClose, onSuccess }) {
               </div>
             )}
 
-            {/* Submit button */}
+            {/* Submit */}
             <button
+              id="intake-start-btn"
               type="submit"
               className="w-full py-3.5 rounded-xl bg-blue-600 text-white text-sm font-bold
                 shadow-lg shadow-blue-200
@@ -174,7 +148,7 @@ export default function AuthModal({ mode, onClose, onSuccess }) {
                 hover:bg-blue-700 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(59,130,246,0.4)]
                 active:scale-[0.98] mt-2"
             >
-              {isSignUp ? 'Create Account & Start Assessment' : 'Sign In & Continue'}
+              Start Assessment
             </button>
           </form>
 

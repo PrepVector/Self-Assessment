@@ -1,22 +1,8 @@
-timestamp,name,email,sql_score,python_score,pandas_score,data_visualization_score,applied_statistics_score,machine_learning_score,ab_testing_score,total_score,total_possible,success_rate_pct,qualification_status
-2026-06-14T12:09:35Z,Ritam Sur,ritamrs095@gmail.com,0,2,0,2,1,1,4,10,35,28.6,Needs Improvement
-2026-06-14T12:10:29Z,Ritam Sur,ritamrs095@gmail.com,0,2,0,2,1,1,4,10,35,28.6,Needs Improvement
-2026-06-14T13:09:49Z,Ritz,ritamrs095@gmail.com,1,1,1,3,3,0,1,10,35,28.6,Needs Improvement
-2026-06-14T15:34:51Z,Rohit,rohitxyz@gmail.com,1,1,2,1,1,0,1,7,35,20.0,Needs Improvement
-2026-06-22T10:39:38Z,Ghuj,ghuj@gmail.com,2,2,0,0,2,0,2,8,35,22.9,Needs Improvement
-2026-06-24T11:10:00Z,alex,aleaxnder@gmail.com,0,1,0,1,1,1,0,4,70,5.7,Needs Improvement
-2026-06-28T10:03:03Z,roxc,roxc@gamil.com,2,1,0,1,2,1,0,7,70,10.0,Needs Improvement
-2026-07-12T10:03:12Z,rtrttt,ddwwe@gmail.com,3,1,0,0,0,0,3,13,70,18.6,Needs Improvement
-2026-07-12T11:26:20Z,dwww,swed@gmail.com,2,3,0,1,0,4,2,25,70,35.7,Needs Improvement
-2026-07-12T13:10:45Z,ddddddrt,wqsd@gmail.com,1,1,0,0,1,1,2,14,70,20.0,Needs Improvement
-2026-07-12T13:24:57Z,ftyu,asdf@gmail.com,1,2,0,1,0,2,1,14,70,20.0,Needs Improvement
-2026-07-12T13:44:45Z,ftyu,werd@gmail.com,3,0,0,0,1,2,3,17,70,24.3,Needs Improvement
-2026-07-19T15:13:45Z,Ritam Sur,ritamrs095@gmail.com,3,2,0,0,2,2,3,22,70,31.4,Needs Improvement
-2026-07-23T19:53:21Z,ryyy,bmjgj@gmail.com,2,0,1,0,0,1,1,13,70,18.6,Needs Improvement
-2026-07-24T15:05:01Z,Ritam,ags@gmail.com,2,0,0,0,1,0,2,12,70,17.1,Needs Improvement
-2026-07-24T15:21:39Z,ggc,fhhf@gmail.com,2,1,0,1,1,3,1,16,70,22.9,Needs Improvement
-2026-07-24T15:38:50Z,gegeg,fwgwg@gmail.com,3,2,0,0,1,2,4,27,70,38.6,Needs Improvement
-2026-07-24T21:22:42Z,Ritzzzzzzz,afgge@gmail.com,3,2,0,2,0,2,4,28,70,40.0,Needs Improvement
-2026-07-24T21:44:37Z,Charlie,frfrs@gmail.com,1,3,0,1,2,2,2,21,70,30.0,Needs Improvement
-2026-07-25T10:39:24Z,Ritam,ritamrs095@gmail.com,4,1,0,1,0,2,2,24,70,34.3,Needs Improvement
-2026-07-25T11:06:47Z,Alex,ritamrs095@gmail.com,1,2,0,0,0,2,3,16,70,22.9,Needs Improvement
+assessment_id,timestamp,name,email,sql_score,python_score,pandas_score,data_visualization_score,applied_statistics_score,machine_learning_score,ab_testing_score,total_score,total_possible,success_rate_pct,qualification_status
+20260726_002451_aa4794,2026-07-25T18:54:51Z,Ritam Sur,ritamrs095@gmail.com,2,3,0,0,0,3,3,21,70,30.0,Needs Improvement
+20260726_003133_87d2bd,2026-07-25T19:01:33Z,Ritam Sur,,2,1,0,1,3,1,2,21,70,30.0,Needs Improvement
+20260726_005636_586e01,2026-07-25T19:26:36Z,Alice Helman,ritamrs095@gmail.com,3,1,0,0,0,2,4,16,70,22.9,Needs Improvement
+20260726_010150_99ac44,2026-07-25T19:31:50Z,Alice Helman,ritamrs095@gmail.com,1,1,0,0,0,2,3,10,70,14.3,Needs Improvement
+20260726_021130_e071cd,2026-07-25T20:41:30Z,Julie Anderson,ritamrs095@gmail.com,2,1,0,0,0,1,3,11,70,15.7,Needs Improvement
+20260726_023748_303bc3,2026-07-25T21:07:48Z,Bob bb,,3,1,0,1,0,3,3,23,70,32.9,Needs Improvement
+20260726_025214_2151bb,2026-07-25T21:22:14Z,Shtht sg,,3,2,0,1,1,4,4,32,70,45.7,Needs Improvement
