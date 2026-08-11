@@ -29,7 +29,12 @@ from typing import List, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.agents.report_writer import generate_evaluation_report, generate_pdf_report
+from app.agents.report_writer import (
+    generate_evaluation_report,
+    generate_pdf_report,
+    build_report_data,
+    generate_new_playwright_pdf_async,
+)
 from app.services.email_service import send_report_email
 
 router = APIRouter()
@@ -109,7 +114,7 @@ def _append_to_csv(row: dict) -> None:
     with open(_CSV_PATH, "a", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=_CSV_HEADERS, extrasaction="ignore")
         writer.writerow(row)
-    print(f"[submit_answers] ✅  Assessment logged to {_CSV_PATH.name}")
+    print(f"[submit_answers] Assessment logged to {_CSV_PATH.name}")
 
 
 def _build_csv_row(submission: QuizSubmission, assessment_id: str) -> dict:
@@ -189,7 +194,7 @@ async def submit_email_endpoint(payload: EmailPayload):
             writer = csv.DictWriter(f, fieldnames=_CSV_HEADERS, extrasaction="ignore")
             writer.writeheader()
             writer.writerows(rows)
-        print(f"[submit_email] ✅ Email updated in CSV for assessment_id={payload.assessment_id}")
+        print(f"[submit_email] Email updated in CSV for assessment_id={payload.assessment_id}")
     else:
         print(f"[submit_email] ⚠️ assessment_id={payload.assessment_id} not found in CSV")
 
@@ -205,7 +210,7 @@ async def submit_email_endpoint(payload: EmailPayload):
                 candidate_name=candidate_name,
                 pdf_path=str(pdf_path)
             )
-            print(f"[submit_email] ✅ Report emailed successfully to {payload.email.strip()}")
+            print(f"[submit_email] Report emailed successfully to {payload.email.strip()}")
         except Exception as exc:
             print(f"[submit_email] ⚠️ Email delivery failed: {exc}")
     else:
@@ -220,73 +225,111 @@ async def submit_answers_endpoint(submission: QuizSubmission):
     Receives a completed quiz submission.
     1. Generates a unique assessment_id for this session.
     2. Instantly appends a structured row to backend/data/user_assessments.csv.
-    3. Attempts to generate an AI evaluation report.
-    4. Returns assessment_id so the frontend can link the email submission later.
+    3. Builds Phase 1 reportData + Phase 2 PrepVector PDF (new primary pipeline).
+    4. Falls back to legacy Markdown pipeline if the new pipeline fails.
+    5. Returns assessment_id so the frontend can link the email submission later.
     """
     # 1. Generate a unique, human-readable session ID
     assessment_id = datetime.now().strftime("%Y%m%d_%H%M%S_") + uuid.uuid4().hex[:6]
+    download_url: str | None = None
 
     # 2. SAVE TO CSV FIRST (Guarantees data is saved instantly!)
     try:
         row = _build_csv_row(submission, assessment_id)
         _append_to_csv(row)
     except Exception as exc:
-        print(f"[submit_answers] ⚠️  CSV logging failed: {exc}")
+        print(f"[submit_answers] ** CSV logging failed: {exc}")
 
-    # 2. Generate the AI evaluation report (If it fails, the data is already safe)
-    # Compute total_correct here so it can be passed to the LLM for accurate context
+    # 2a. Derive answer counts used by both the new and legacy pipelines
     total_answered = submission.total_questions
     total_wrong    = len(submission.wrong_answers)
     total_correct  = max(0, total_answered - total_wrong)
 
+    # 2b. PHASE 1 + PHASE 2 — Build structured reportData, then render new PDF.
+    #     Wrapped in a single try/except so any failure is non-fatal.
     try:
-        wrong_answers_dicts = [wa.model_dump() for wa in submission.wrong_answers]
-        report_markdown = generate_evaluation_report(
-            weighted_score  = submission.score,
-            total_correct   = total_correct,
-            total_questions = submission.total_questions,
-            wrong_answers   = wrong_answers_dicts,
+        wrong_answers_by_section_p1: dict[str, list[dict]] = {}
+        for wa in submission.wrong_answers:
+            sn = wa.section_name or "Unknown"
+            wrong_answers_by_section_p1.setdefault(sn, []).append(wa.model_dump())
+
+        questions_per_section_p1: dict[str, int] = {s: 5 for s in _SECTION_COL}
+
+        report_data = build_report_data(
+            candidate_name           = submission.name or "Anonymous",
+            assessment_id            = assessment_id,
+            weighted_score           = submission.score,
+            total_correct            = total_correct,
+            total_questions          = total_answered,
+            section_scores           = submission.section_scores or {},
+            wrong_answers_by_section = wrong_answers_by_section_p1,
+            questions_per_section    = questions_per_section_p1,
         )
-        if not report_markdown:
-            raise ValueError("Empty report returned by AI.")
+        _insight_count = len(report_data.get("skillInsights", {}))
+        print(
+            f"[submit_answers] Phase 1 reportData built -- "
+            f"{len(report_data['skills'])} skills classified, "
+            f"{_insight_count}/7 AI insights received."
+        )
+
+        # Phase 2: render the new PrepVector HTML template -> PDF
+        pdf_path = await generate_new_playwright_pdf_async(
+            report_data    = report_data,
+            candidate_name = submission.name or "Candidate",
+        )
+        if pdf_path:
+            filename     = pathlib.Path(pdf_path).name
+            download_url = f"/api/download-report/{filename}"
+            print(f"[submit_answers] New PrepVector PDF ready: {filename}")
+
     except Exception as exc:
-        print(f"[submit_answers] ⚠️  Report generation skipped/failed: {exc}")
-        report_markdown = "Report generation delayed until Phase 6."
+        # Phase 1/2 failure must NEVER break CSV persistence or the response
+        print(f"[submit_answers] ** Phase 1/2 pipeline failed (non-fatal): {exc}")
 
-    # 3. Convert Markdown report to PDF
-    download_url: str | None = None
-    try:
-        if report_markdown and report_markdown != "Report generation delayed until Phase 6.":
-            # total_correct / total_answered already computed above
-            # Build per-section wrong-answer breakdown for the Attempt Stats table
-            wrong_answers_by_section: dict[str, list[dict]] = {}
-            for wa in submission.wrong_answers:
-                sn = wa.section_name or "Unknown"
-                wrong_answers_by_section.setdefault(sn, []).append(wa.model_dump())
-
-            # Questions-per-section: 5 per section (Clean-70 model)
-            questions_per_section: dict[str, int] = {
-                s: 5 for s in _SECTION_COL
-            }
-
-            pdf_path = await generate_pdf_report(
-                markdown_text            = report_markdown,
-                candidate_name           = submission.name or "Candidate",
-                weighted_score           = submission.score,
-                total_correct            = total_correct,
-                total_questions          = total_answered,
-                section_scores           = submission.section_scores or {},
-                wrong_answers_by_section = wrong_answers_by_section,
-                questions_per_section    = questions_per_section,
+    # 3. Legacy Markdown pipeline — runs ONLY as fallback when the new pipeline failed.
+    #    Kept intact per Phase 2 spec to allow easy rollback.
+    report_markdown = ""
+    if download_url is None:
+        print("[submit_answers] Falling back to legacy Markdown/PDF pipeline...")
+        try:
+            wrong_answers_dicts = [wa.model_dump() for wa in submission.wrong_answers]
+            report_markdown = generate_evaluation_report(
+                weighted_score  = submission.score,
+                total_correct   = total_correct,
+                total_questions = submission.total_questions,
+                wrong_answers   = wrong_answers_dicts,
             )
-            if pdf_path:
-                # Return only the filename — never expose server paths to the client
-                filename = pathlib.Path(pdf_path).name
-                download_url = f"/api/download-report/{filename}"
+            if not report_markdown:
+                raise ValueError("Empty report returned by AI.")
+        except Exception as exc:
+            print(f"[submit_answers] ** Report generation skipped/failed: {exc}")
+            report_markdown = "Report generation delayed."
 
+        # 3b. Convert legacy Markdown report to PDF
+        try:
+            if report_markdown and report_markdown != "Report generation delayed.":
+                wrong_answers_by_section: dict[str, list[dict]] = {}
+                for wa in submission.wrong_answers:
+                    sn = wa.section_name or "Unknown"
+                    wrong_answers_by_section.setdefault(sn, []).append(wa.model_dump())
 
-    except Exception as pdf_exc:
-        print(f"[submit_answers] ⚠️  PDF generation failed (non-fatal): {pdf_exc}")
+                questions_per_section: dict[str, int] = {s: 5 for s in _SECTION_COL}
 
-    # 4. Return the response (include assessment_id so the frontend can attach it to the email)
+                legacy_pdf_path = await generate_pdf_report(
+                    markdown_text            = report_markdown,
+                    candidate_name           = submission.name or "Candidate",
+                    weighted_score           = submission.score,
+                    total_correct            = total_correct,
+                    total_questions          = total_answered,
+                    section_scores           = submission.section_scores or {},
+                    wrong_answers_by_section = wrong_answers_by_section,
+                    questions_per_section    = questions_per_section,
+                )
+                if legacy_pdf_path:
+                    filename     = pathlib.Path(legacy_pdf_path).name
+                    download_url = f"/api/download-report/{filename}"
+        except Exception as pdf_exc:
+            print(f"[submit_answers] ** Legacy PDF generation failed (non-fatal): {pdf_exc}")
+
+    # 4. Return the response
     return {"assessment_id": assessment_id, "report": report_markdown, "download_url": download_url}

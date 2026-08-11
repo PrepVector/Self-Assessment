@@ -883,3 +883,686 @@ async def generate_pdf_report(
         questions_per_section    = questions_per_section,
     )
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6.  PHASE 1 — Structured reportData layer
+#     Establishes the new data contract for the future HTML template.
+#     All existing functions above are preserved and unchanged.
+#     This section does NOT touch HTML rendering, Playwright, or the PDF.
+# ─────────────────────────────────────────────────────────────────────────────
+
+from pydantic import BaseModel as _BaseModel, Field as _Field
+
+# ── Canonical skill registry — order matches the Clean-70 assessment ──────────
+
+_SKILL_REGISTRY: list[dict] = [
+    {"key": "sql",                "name": "SQL",                "short": "SQL"},
+    {"key": "python",             "name": "Python",             "short": "Python"},
+    {"key": "pandas",             "name": "Pandas",             "short": "Pandas"},
+    {"key": "data_visualization", "name": "Data Visualization", "short": "Data Viz"},
+    {"key": "applied_statistics", "name": "Applied Statistics", "short": "Appl. Stats"},
+    {"key": "machine_learning",   "name": "Machine Learning",   "short": "ML"},
+    {"key": "ab_testing",         "name": "A/B Testing",        "short": "A/B Testing"},
+]
+
+# Quick lookup: section display-name → snake_case key (used during classification)
+_SECTION_TO_KEY: dict[str, str] = {s["name"]: s["key"] for s in _SKILL_REGISTRY}
+
+# Frozen set of all 7 expected insight keys — used for validation after Gemini call
+_EXPECTED_INSIGHT_KEYS: frozenset[str] = frozenset(s["key"] for s in _SKILL_REGISTRY)
+
+
+# ── Static resource library (mirrors the resource list in the supplied template) ─
+
+_STATIC_RESOURCES: list[dict] = [
+    {
+        "topic":    "SQL",
+        "subtopic": "SQL Joins and Window functions",
+        "url":      "https://prepvector.mylearnworlds.com/sqlguide",
+        "skillKey": "sql",
+    },
+    {
+        "topic":    "Statistics and Probability",
+        "subtopic": "Statistics guide",
+        "url":      "https://prepvector.mylearnworlds.com/statitsticsguide",
+        "skillKey": "applied_statistics",
+    },
+    {
+        "topic":    "Applied ML",
+        "subtopic": "Supervised and unsupervised learning",
+        "url":      "https://prepvector.mylearnworlds.com/mlguide",
+        "skillKey": "machine_learning",
+    },
+    {
+        "topic":    "Others",
+        "subtopic": "Resume Guides",
+        "url":      "https://prepvector.mylearnworlds.com/resumeguide",
+        "skillKey": None,
+    },
+    {
+        "topic":    "Others",
+        "subtopic": "LinkedIn Guides",
+        "url":      "https://prepvector.mylearnworlds.com/linkedin",
+        "skillKey": None,
+    },
+]
+
+
+# ── Pydantic schema for structured Gemini skill insights ─────────────────────
+
+class SkillInsight(_BaseModel):
+    """One AI-generated insight sentence for a single assessed skill."""
+
+    key: str = _Field(
+        description=(
+            "The snake_case skill key exactly as provided in the input. "
+            "One of: sql, python, pandas, data_visualization, "
+            "applied_statistics, machine_learning, ab_testing."
+        )
+    )
+    insight: str = _Field(
+        description=(
+            "One sentence (≤ 30 words) that explains what the candidate's "
+            "bucket (growth / developing / strength) means practically for "
+            "their career or technical interviews. Must NOT mention numeric "
+            "scores, percentages, or raw delta values."
+        )
+    )
+
+
+class SkillInsightsResponse(_BaseModel):
+    """Structured response containing exactly one insight per assessed skill."""
+
+    insights: list[SkillInsight] = _Field(
+        description="One SkillInsight entry for each of the 7 assessed skills, no more, no less."
+    )
+
+
+# ── Deterministic classification helpers (per report_generation_algorithm.md) ─
+
+def _classify(delta: float) -> str:
+    """
+    Bucket a skill by how far the candidate is from the cohort average.
+
+    Rule (from report_generation_algorithm.md §2 — the 1-point threshold):
+      delta <= -1.0  → "growth"     (real gap: >1 pt behind cohort)
+      delta >= +1.0  → "strength"   (real edge: >1 pt ahead of cohort)
+      else           → "developing" (within ±1 of cohort)
+    """
+    if delta <= -1.0:
+        return "growth"
+    if delta >= 1.0:
+        return "strength"
+    return "developing"
+
+
+def _trend_arrow(delta: float) -> str:
+    """
+    Return a trend indicator using the 0.4-point threshold from the spec.
+
+    The spec uses a more sensitive threshold (0.4) here than the bucket rule
+    (1.0) so the score table can flag any visible lean, even a small one,
+    while the roadmap only acts on gaps large enough to matter.
+    """
+    if delta > 0.4:
+        return "▲"
+    if delta < -0.4:
+        return "▼"
+    return "–"
+
+
+# ── Structured Gemini skill-insight generator ─────────────────────────────────
+
+def generate_skill_insights(classified_skills: list[dict]) -> dict[str, str]:
+    """
+    Calls Gemini with structured JSON output to produce one-sentence insights
+    for each of the 7 assessed skills.
+
+    IMPORTANT: Gemini receives ONLY post-classification data (key, name, delta,
+    bucket) — never raw scores or benchmark numbers. This keeps all arithmetic
+    deterministic in the backend and restricts Gemini to language generation only.
+
+    Parameters
+    ----------
+    classified_skills : list[dict]
+        Each dict must have keys: key, name, delta, bucket.
+
+    Returns
+    -------
+    dict[str, str]
+        Mapping from skill key → one-sentence insight string.
+        Returns a partial or empty dict on any failure — never raises.
+        Missing keys are logged as warnings so the caller can handle gracefully.
+    """
+    # Build a concise, human-readable summary for the prompt
+    lines: list[str] = []
+    for s in classified_skills:
+        sign      = "+" if s["delta"] >= 0 else ""
+        delta_str = f"{sign}{s['delta']:.1f}"
+        lines.append(
+            f"  - {s['name']} (key={s['key']}): "
+            f"bucket={s['bucket']}, delta_vs_cohort={delta_str}"
+        )
+    skill_summary = "\n".join(lines)
+
+    prompt = (
+        "You are a career coaching assistant writing one-line skill commentary "
+        "for a Data Science professional assessment report.\n\n"
+        "Each skill has been classified into exactly one of three buckets:\n"
+        "  - 'growth'     → more than 1 point behind the cohort average "
+        "(a real gap that needs focused attention)\n"
+        "  - 'developing' → within ±1 point of the cohort average "
+        "(solid, with room to tighten)\n"
+        "  - 'strength'   → more than 1 point ahead of the cohort average "
+        "(a genuine edge worth leveraging)\n\n"
+        "The delta shown is candidate score minus cohort average.\n\n"
+        f"Assessed skills:\n{skill_summary}\n\n"
+        "Task: For EVERY skill listed above, write exactly ONE sentence "
+        "(≤ 30 words) that:\n"
+        "  1. Is grounded in the bucket and delta direction shown.\n"
+        "  2. Explains the practical implication for the candidate's career or "
+        "technical interviews.\n"
+        "  3. Is specific to that skill domain — not generic filler.\n"
+        "  4. Does NOT quote any numeric values "
+        "(no scores, percentages, or deltas).\n"
+        "  5. Uses the exact key string provided in the input for each skill.\n\n"
+        "Return all 7 skills with no omissions."
+    )
+
+    models_to_try = [
+        "gemini-2.5-flash",
+        "gemini-2.5-flash-lite",
+        "gemini-2.0-flash",
+    ]
+
+    print("[report_writer] Generating structured skill insights...")
+
+    for model_id in models_to_try:
+        try:
+            response = client.models.generate_content(
+                model=model_id,
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema=SkillInsightsResponse,
+                    temperature=0.45,
+                ),
+            )
+
+            # Validate via Pydantic — raises ValidationError if schema is violated
+            parsed = SkillInsightsResponse.model_validate_json(response.text)
+
+            result: dict[str, str] = {}
+            for item in parsed.insights:
+                # Accept only recognised keys with non-empty insight strings
+                if item.key in _EXPECTED_INSIGHT_KEYS and item.insight.strip():
+                    result[item.key] = item.insight.strip()
+
+            missing = _EXPECTED_INSIGHT_KEYS - result.keys()
+            if missing:
+                print(
+                    f"[report_writer] ** Skill insights missing keys: {missing}. "
+                    "Partial result will be used — report will render without those insights."
+                )
+            else:
+                print(
+                    f"[report_writer] OK All {len(result)} skill insights received "
+                    f"via {model_id}."
+                )
+
+            return result  # Return partial or complete — caller handles missing keys gracefully
+
+        except Exception as exc:
+            error_tag = str(exc)[:140]
+            print(f"[report_writer] ** Skill insights failed on {model_id}: {error_tag}")
+            continue  # Try the next model in the fallback chain
+
+    print(
+        "[report_writer] All models failed for skill insights — returning empty dict. "
+        "The report will render with no AI commentary."
+    )
+    return {}
+
+
+# ── Deterministic reportData builder ─────────────────────────────────────────
+
+def build_report_data(
+    candidate_name: str,
+    assessment_id: str,
+    weighted_score: int,
+    total_correct: int,
+    total_questions: int,
+    section_scores: "dict[str, int | float]",
+    wrong_answers_by_section: "dict[str, list[dict]]",
+    questions_per_section: "dict[str, int]",
+    assessment_date: str = "",
+) -> dict:
+    """
+    Builds the complete, structured reportData object for the new HTML template.
+
+    This is the single authoritative source for the Phase 1 data contract.
+    Every field except `skillInsights` is computed deterministically.
+    `skillInsights` is produced by generate_skill_insights(), which is fed
+    only the post-classification output (never raw numbers).
+
+    The existing CSV persistence and PDF pipeline are NOT affected by this
+    function. It is purely additive in Phase 1.
+
+    Parameters
+    ----------
+    candidate_name           : Display name (from QuizSubmission.name).
+    assessment_id            : Unique session ID (from submit_answers.py).
+    weighted_score           : Total weighted points scored (0–70).
+    total_correct            : Total correct answers across all sections.
+    total_questions          : Total questions in the assessment (35).
+    section_scores           : Dict mapping section display-name → weighted
+                               score out of 10. e.g. {"SQL": 8, "Python": 6}.
+    wrong_answers_by_section : Dict mapping section display-name → list of
+                               wrong-answer dicts (from QuizSubmission).
+    questions_per_section    : Dict mapping section display-name → question
+                               count (5 per section under the Clean-70 model).
+    assessment_date          : Human-readable date string. Defaults to today UTC.
+
+    Returns
+    -------
+    dict
+        The full reportData structure. Shape is documented in
+        implementation_plan.md and mirrors the `reportData` contract in
+        skill_assessment_report_template.html.
+    """
+    from datetime import datetime, timezone as _tz
+
+    now = datetime.now(_tz.utc)
+    if not assessment_date:
+        assessment_date = now.strftime("%B %d, %Y")
+
+    _TOTAL_POSSIBLE = 70
+    total_incorrect = total_questions - total_correct
+    success_rate    = (weighted_score / _TOTAL_POSSIBLE * 100) if _TOTAL_POSSIBLE > 0 else 0.0
+    qualification   = "Qualified" if success_rate >= 60.0 else "Needs Improvement"
+
+    # ── Per-skill deterministic classification ────────────────────────────────
+    classified_skills: list[dict] = []
+
+    for skill_def in _SKILL_REGISTRY:
+        name  = skill_def["name"]
+        key   = skill_def["key"]
+        short = skill_def["short"]
+
+        # Scores and benchmarks
+        score = float(section_scores.get(name, 0))
+        avg   = float(DEFAULT_BENCHMARKS.get(name, 5.0))
+        delta = round(score - avg, 2)
+
+        bucket = _classify(delta)
+        arrow  = _trend_arrow(delta)
+
+        # Section-level attempt breakdown
+        total_q     = questions_per_section.get(name, 5)
+        wrong_list  = wrong_answers_by_section.get(name, [])
+        skipped     = sum(1 for wa in wrong_list if not wa.get("user_answer", "").strip())
+        incorrect_q = len(wrong_list) - skipped
+        correct_q   = total_q - len(wrong_list)   # total - (incorrect + skipped)
+        attempted   = total_q - skipped
+        accuracy    = (correct_q / attempted * 100) if attempted > 0 else 0.0
+
+        classified_skills.append({
+            "key":        key,
+            "name":       name,
+            "short":      short,
+            "score":      score,
+            "avg":        avg,
+            "delta":      delta,
+            "bucket":     bucket,
+            "trendArrow": arrow,
+            "sectionStats": {
+                "totalQ":    total_q,
+                "correct":   correct_q,
+                "incorrect": incorrect_q,
+                "skipped":   skipped,
+                "attempted": attempted,
+                "accuracy":  round(accuracy, 1),
+            },
+        })
+
+    # ── AI insight generation (receives only classification output) ───────────
+    insight_input = [
+        {
+            "key":    s["key"],
+            "name":   s["name"],
+            "delta":  s["delta"],
+            "bucket": s["bucket"],
+        }
+        for s in classified_skills
+    ]
+    skill_insights: dict[str, str] = generate_skill_insights(insight_input)
+
+    # ── Assemble the full reportData dict ────────────────────────────────────
+    report_data: dict = {
+        "candidate": {
+            "name":         candidate_name or "Anonymous",
+            "track":        "Data Science Core · v3",
+            "takenOn":      assessment_date,
+            "assessmentId": assessment_id,
+        },
+        "cohort": {
+            # Cohort size is not currently tracked in this system.
+            # This is a placeholder; wire to real data in Phase 2 if needed.
+            "size": None,
+        },
+        "testStats": {
+            "totalQuestions":      total_questions,    # 35 under Clean-70 model
+            "answered":            total_questions,
+            "correct":             total_correct,
+            "incorrect":           total_incorrect,
+            "weightedScore":       weighted_score,
+            "totalPossible":       _TOTAL_POSSIBLE,
+            "successRatePct":      round(success_rate, 1),
+            "qualificationStatus": qualification,
+        },
+        "skills":        classified_skills,    # list of 7 dicts, one per skill
+        "skillInsights": skill_insights,       # dict[key → str], Gemini-generated
+        "resources":     _STATIC_RESOURCES,    # static list, unfiltered
+    }
+
+    return report_data
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 7.  PHASE 2 — PrepVector HTML template rendering
+#     Uses the supplied skill_assessment_report_template.html as the visual
+#     source.  Injects Phase 1 reportData via json.dumps(), embeds the logo
+#     as a Base64 data URI, adds print-aware CSS, and renders with Playwright.
+#
+#     Entry points:
+#       generate_new_playwright_pdf(report_data, candidate_name)   — sync
+#       generate_new_playwright_pdf_async(report_data, candidate_name) — async
+#
+#     All existing functions above are preserved and unchanged.
+# ─────────────────────────────────────────────────────────────────────────────
+
+import json as _json
+import base64 as _base64
+
+_TEMPLATE_PATH = _BACKEND_DIR.parent / "report_reference" / "skill_assessment_report_template.html"
+_LOGO_PATH     = _BACKEND_DIR / "assets" / "prepvector_logo.jpeg"
+
+
+# ── Template transformation helpers ──────────────────────────────────────────
+
+def _inject_report_data(html: str, report_data: dict) -> str:
+    """
+    Replace the placeholder `const reportData = {...};` in the HTML template
+    with the actual reportData serialised as JSON.
+
+    Uses a brace-counting parser to find the exact end of the object literal,
+    making it immune to nested object/array structure changes in the template.
+    """
+    import re as _re
+
+    # Locate the opening "const reportData = {"
+    match = _re.search(r"const reportData\s*=\s*\{", html)
+    if not match:
+        raise ValueError(
+            "[report_writer] Could not find 'const reportData = {' in the HTML template. "
+            "Ensure the template has not been modified."
+        )
+
+    obj_start = match.end() - 1        # index of the opening '{'
+    depth = 0
+    in_str = False
+    str_char = ""
+    escape_next = False
+    i = obj_start
+
+    while i < len(html):
+        ch = html[i]
+        if escape_next:
+            escape_next = False
+        elif ch == "\\" and in_str:
+            escape_next = True
+        elif in_str:
+            if ch == str_char:
+                in_str = False
+        elif ch in ('"', "'", "`"):
+            in_str = True
+            str_char = ch
+        elif ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                obj_end = i + 1                # past the closing '}'
+                # Consume an optional trailing semicolon
+                if obj_end < len(html) and html[obj_end] == ";":
+                    obj_end += 1
+                break
+        i += 1
+    else:
+        raise ValueError("[report_writer] Brace-counting failed to find closing '}' for reportData.")
+
+    json_str = _json.dumps(report_data, ensure_ascii=False, indent=2)
+    replacement = f"const reportData = {json_str};"
+    return html[: match.start()] + replacement + html[obj_end:]
+
+
+def _inject_logo(html: str, logo_path: pathlib.Path) -> str:
+    """
+    Replace the template's hardcoded Base64 PNG logo with the actual
+    PrepVector logo (JPEG).  Falls back gracefully if the file is missing.
+    """
+    import re as _re
+
+    if not logo_path.exists():
+        print(f"[report_writer] WARNING: Logo not found at {logo_path} — skipping logo injection.")
+        return html
+
+    with open(logo_path, "rb") as fh:
+        logo_bytes = fh.read()
+    logo_b64 = _base64.b64encode(logo_bytes).decode("ascii")
+
+    suffix = logo_path.suffix.lower()
+    mime   = "image/jpeg" if suffix in (".jpg", ".jpeg") else "image/png"
+    new_src_line = f'document.getElementById("logo-img").src = "data:{mime};base64,{logo_b64}";'
+
+    # The template has one long "logo-img" src assignment line — replace it
+    result = _re.sub(
+        r'document\.getElementById\("logo-img"\)\.src\s*=\s*"data:[^"]+";',
+        new_src_line,
+        html,
+        count=1,
+    )
+    if result == html:
+        print("[report_writer] WARNING: Logo src pattern not found in template — logo not injected.")
+    return result
+
+
+def _add_print_css(html: str) -> str:
+    """
+    Inject print-aware CSS overrides into the template's <head>.
+
+    - Forces @page size so Playwright and the template agree on A4 dimensions.
+    - Sets .page max-width to 100% so the content fills the print column.
+    - Prevents key composite elements from splitting across page boundaries.
+    - The template already handles animation visibility via its own
+      `@media (prefers-reduced-motion: reduce)` rule, which Playwright
+      activates when we call `page.emulate_media(reduced_motion='reduce')`.
+    """
+    print_css = """\
+<style id="pv-print-overrides">
+/* ═══════════════════════════════════════════════════════════════
+   PrepVector PDF print overrides — injected by report_writer.py
+   ═══════════════════════════════════════════════════════════════ */
+@page {
+  size: A4;
+  margin: 10mm 12mm;
+}
+
+@media print {
+  /* Force the content column to fill the printable width */
+  .page {
+    max-width: 100% !important;
+    margin: 0 !important;
+  }
+
+  /* ── Avoid page breaks inside composite blocks ── */
+  .stat-row           { break-inside: avoid; page-break-inside: avoid; }
+  .fingerprint-grid   { break-inside: avoid; page-break-inside: avoid; }
+  #radar-mount        { break-inside: avoid; page-break-inside: avoid; }
+  .cta                { break-inside: avoid; page-break-inside: avoid; }
+  .cta-inner          { break-inside: avoid; page-break-inside: avoid; }
+
+  /* ── Table row integrity ── */
+  tr                  { break-inside: avoid; page-break-inside: avoid; }
+  td                  { break-inside: avoid; page-break-inside: avoid; }
+
+  /* ── Roadmap: keep phase header with its first skill row ── */
+  tr.phase-row        { break-after: avoid;  page-break-after: avoid; }
+  tr.skill-row        { break-inside: avoid; page-break-inside: avoid; }
+
+  /* ── Section / eyebrow: keep heading with its content ── */
+  .eyebrow            { break-after: avoid;  page-break-after: avoid; }
+  .hero-greeting      { break-after: avoid;  page-break-after: avoid; }
+
+  /* ── Sections may start new pages (auto — not forced) ── */
+  section             { break-before: auto;  page-break-before: auto; }
+
+  /* ── Do not add browser "URL" annotations after links ── */
+  a[href]::after      { content: none !important; }
+}
+</style>
+"""
+    if "</head>" not in html:
+        print("[report_writer] WARNING: </head> not found — print CSS not injected.")
+        return html
+    return html.replace("</head>", print_css + "\n</head>", 1)
+
+
+# ── Core synchronous renderer ─────────────────────────────────────────────────
+
+def generate_new_playwright_pdf(
+    report_data: dict,
+    candidate_name: str = "Candidate",
+) -> str:
+    """
+    Renders the supplied PrepVector HTML template with the Phase 1 reportData
+    and produces a PDF using Playwright / Chromium.
+
+    Flow
+    ----
+    1. Read the template HTML from disk (read-only reference file).
+    2. Inject the PrepVector logo as a Base64 JPEG data URI.
+    3. Replace the placeholder `const reportData = {...}` with our JSON.
+    4. Insert print-specific CSS overrides.
+    5. Launch Chromium headless with reduced-motion emulation (disables
+       CSS entry animations so every element is immediately visible).
+    6. Load the HTML and wait for networkidle (fonts, etc.).
+    7. Wait for `#radar-mount svg` — the last DOM element written by JS,
+       confirming the full render pipeline has completed.
+    8. Call page.pdf() and return the absolute output path.
+
+    Parameters
+    ----------
+    report_data    : dict  — Output of build_report_data().
+    candidate_name : str   — Used only to build the output filename.
+
+    Returns
+    -------
+    str — Absolute path to the generated PDF file.
+    """
+    from playwright.sync_api import sync_playwright
+
+    _REPORTS_DIR.mkdir(parents=True, exist_ok=True)
+
+    # ── 1. Read template ──────────────────────────────────────────────────────
+    if not _TEMPLATE_PATH.exists():
+        raise FileNotFoundError(
+            f"[report_writer] Report template not found: {_TEMPLATE_PATH}\n"
+            "Expected at: report_reference/skill_assessment_report_template.html"
+        )
+    html = _TEMPLATE_PATH.read_text(encoding="utf-8")
+    print(f"[report_writer] Template loaded ({len(html):,} chars).")
+
+    # ── 2. Logo injection ─────────────────────────────────────────────────────
+    html = _inject_logo(html, _LOGO_PATH)
+    print("[report_writer] Logo injected.")
+
+    # ── 3. reportData JSON injection ──────────────────────────────────────────
+    html = _inject_report_data(html, report_data)
+    print("[report_writer] reportData injected.")
+
+    # ── 4. Print CSS ──────────────────────────────────────────────────────────
+    html = _add_print_css(html)
+    print("[report_writer] Print CSS injected.")
+
+    # ── 5. Output filename ────────────────────────────────────────────────────
+    safe_name = re.sub(r"[^\w\s-]", "", candidate_name or "Candidate").strip()
+    safe_name = re.sub(r"\s+", "_", safe_name)
+    filename  = f"{safe_name}_Self-Assessment_Report.pdf"
+    out_path  = _REPORTS_DIR / filename
+
+    # ── 6. Playwright render ──────────────────────────────────────────────────
+    print("[report_writer] Launching Playwright for PrepVector template...")
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+        context = browser.new_context()
+        page    = context.new_page()
+
+        # Activate @media (prefers-reduced-motion: reduce) — this is already
+        # handled by the template's own CSS rule so all sections start visible.
+        page.emulate_media(reduced_motion="reduce")
+
+        # Load HTML — wait for Google Fonts and all network requests to settle
+        page.set_content(html, wait_until="networkidle")
+
+        # ── Wait for JS render completion ─────────────────────────────────────
+        # The template's last action is:
+        #   document.getElementById("radar-mount").innerHTML = buildRadar(skills);
+        # So #radar-mount svg existing means the full pipeline has finished.
+        try:
+            page.wait_for_selector("#radar-mount svg", timeout=20_000)
+            print("[report_writer] Radar chart rendered — JS pipeline complete.")
+        except Exception as _radar_exc:
+            print(f"[report_writer] WARNING: radar chart selector timed out: {_radar_exc}")
+            # Still attempt PDF — the rest of the report may be intact
+
+        # Also confirm the roadmap and study calendar are populated
+        try:
+            page.wait_for_selector("#roadmap-mount tr", timeout=8_000)
+            page.wait_for_selector("#calendar-rows tr", timeout=8_000)
+        except Exception:
+            pass  # Non-fatal — PDF generation continues
+
+        # ── Generate PDF ──────────────────────────────────────────────────────
+        page.pdf(
+            path=str(out_path),
+            format="A4",
+            print_background=True,
+            # Zero Playwright-level margins — our @page CSS rule sets them
+            margin={"top": "0mm", "bottom": "0mm", "left": "0mm", "right": "0mm"},
+        )
+
+        browser.close()
+
+    print(f"[report_writer] PrepVector PDF saved -> {out_path}")
+    return str(out_path.resolve())
+
+
+# ── Async wrapper (runs sync Playwright safely on Windows ProactorEventLoop) ──
+
+async def generate_new_playwright_pdf_async(
+    report_data: dict,
+    candidate_name: str = "Candidate",
+) -> str:
+    """
+    Async wrapper for generate_new_playwright_pdf().
+
+    Uses asyncio.to_thread() so the synchronous Playwright call runs in a
+    background thread without blocking or conflicting with the event loop.
+    This is the same pattern as the existing generate_playwright_pdf_report_async().
+    """
+    return await asyncio.to_thread(
+        generate_new_playwright_pdf,
+        report_data,
+        candidate_name,
+    )
