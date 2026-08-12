@@ -20,6 +20,7 @@ CSV columns written per submission:
   total_score, total_possible, success_rate_pct, qualification_status
 """
 
+import asyncio
 import csv
 import pathlib
 import uuid
@@ -36,6 +37,7 @@ from app.agents.report_writer import (
     generate_new_playwright_pdf_async,
 )
 from app.services.email_service import send_report_email
+from app.services.google_sheets import append_assessment_row, update_email_by_assessment_id
 
 router = APIRouter()
 
@@ -195,6 +197,12 @@ async def submit_email_endpoint(payload: EmailPayload):
             writer.writeheader()
             writer.writerows(rows)
         print(f"[submit_email] Email updated in CSV for assessment_id={payload.assessment_id}")
+        
+        # Update Google Sheets
+        try:
+            await asyncio.to_thread(update_email_by_assessment_id, payload.assessment_id, payload.email.strip())
+        except Exception as exc:
+            print(f"[submit_email] ** Google Sheets update failed (non-fatal): {exc}")
     else:
         print(f"[submit_email] ⚠️ assessment_id={payload.assessment_id} not found in CSV")
 
@@ -237,6 +245,13 @@ async def submit_answers_endpoint(submission: QuizSubmission):
     try:
         row = _build_csv_row(submission, assessment_id)
         _append_to_csv(row)
+        
+        # 2.5 APPEND TO GOOGLE SHEETS
+        try:
+            await asyncio.to_thread(append_assessment_row, row, _CSV_HEADERS)
+        except Exception as exc:
+            print(f"[submit_answers] ** Google Sheets logging failed (non-fatal): {exc}")
+            
     except Exception as exc:
         print(f"[submit_answers] ** CSV logging failed: {exc}")
 

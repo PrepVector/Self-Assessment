@@ -4,9 +4,11 @@ venv/
 env/
 .env
 
+
 # API Keys and Secrets
 *.env
 .env.*
+credentials.json
 
 # Python Cache
 __pycache__/

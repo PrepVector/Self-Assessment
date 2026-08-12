@@ -1177,7 +1177,17 @@ def build_report_data(
         assessment_date = now.strftime("%B %d, %Y")
 
     _TOTAL_POSSIBLE = 70
-    total_incorrect = total_questions - total_correct
+
+    # Count skipped questions globally (user_answer is blank / whitespace-only)
+    total_skipped = sum(
+        1
+        for wa_list in wrong_answers_by_section.values()
+        for wa in wa_list
+        if not wa.get("user_answer", "").strip()
+    )
+    total_answered  = total_questions - total_skipped
+    true_incorrect  = total_questions - total_correct - total_skipped
+
     success_rate    = (weighted_score / _TOTAL_POSSIBLE * 100) if _TOTAL_POSSIBLE > 0 else 0.0
     qualification   = "Qualified" if success_rate >= 60.0 else "Needs Improvement"
 
@@ -1252,9 +1262,9 @@ def build_report_data(
         },
         "testStats": {
             "totalQuestions":      total_questions,    # 35 under Clean-70 model
-            "answered":            total_questions,
+            "answered":            total_answered,     # excludes skipped questions
             "correct":             total_correct,
-            "incorrect":           total_incorrect,
+            "incorrect":           true_incorrect,     # excludes skipped questions
             "weightedScore":       weighted_score,
             "totalPossible":       _TOTAL_POSSIBLE,
             "successRatePct":      round(success_rate, 1),
@@ -1285,7 +1295,7 @@ import json as _json
 import base64 as _base64
 
 _TEMPLATE_PATH = _BACKEND_DIR.parent / "report_reference" / "skill_assessment_report_template.html"
-_LOGO_PATH     = _BACKEND_DIR / "assets" / "prepvector_logo.jpeg"
+_LOGO_PATH     = _BACKEND_DIR / "assets" / "prepvector_logo.png"
 
 
 # ── Template transformation helpers ──────────────────────────────────────────

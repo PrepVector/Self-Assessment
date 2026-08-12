@@ -907,7 +907,9 @@ export default function QuizComponent({ user }) {
     const isLastQuestion = activeQuestionIdx === section.questions.length - 1
 
     if (isLastQuestion) {
-      // Move to next section without saving an answer or marking complete
+      // Mark section complete even though the last question was skipped,
+      // so the sidebar shows the green checkmark for this section.
+      setCompletedSections(prev => new Set([...prev, activeSectionIdx]))
       goToQuestion(activeSectionIdx + 1, 0, false)
     } else {
       goToQuestion(activeSectionIdx, activeQuestionIdx + 1, false)
@@ -933,28 +935,48 @@ export default function QuizComponent({ user }) {
     // Mark final section complete
     setCompletedSections(prev => new Set([...prev, activeSectionIdx]))
 
-    // ── Tally results with weighted scoring ────────────────────────────────
-    const allAnswers = Object.values(answersRef.current)
-    const correctAnswers = allAnswers.filter(a => a.user_answer === a.correct_answer)
-    const wrongAnswers = allAnswers.filter(a => a.user_answer !== a.correct_answer)
-
-    // Weighted score: Easy=1, Moderate=2, Advanced=4
-    const weighted = correctAnswers.reduce((sum, a) => {
-      return sum + (DIFFICULTY_WEIGHTS[a.difficulty] ?? 1)
-    }, 0)
-
-    // ── Build per-section score breakdown ─────────────────────────────────
+    // ── Tally results — iterate over the true source of truth ────────────
+    // This ensures skipped questions are never silently dropped from the
+    // payload and that total_questions always reflects the full quiz length.
+    let totalQuestionsCount = 0
+    let correctCount = 0
+    let weighted = 0
+    const wrongAnswers = []
     const sectionScores = {}
-    quizData.sections.forEach(sec => {
-      const secAnswers = allAnswers.filter(a => a.section_name === sec.section_name)
-      const secCorrect = secAnswers.filter(a => a.user_answer === a.correct_answer).length
-      sectionScores[sec.section_name] = secCorrect
+
+    quizData.sections.forEach((sec, sIdx) => {
+      let sectionCorrect = 0
+
+      sec.questions.forEach((q, qIdx) => {
+        totalQuestionsCount++
+        const recorded = answersRef.current[`${sIdx}-${qIdx}`]
+
+        if (recorded && recorded.user_answer === q.correct_answer) {
+          // Correctly answered
+          correctCount++
+          weighted += (DIFFICULTY_WEIGHTS[q.difficulty] ?? 1)
+          sectionCorrect++
+        } else {
+          // Incorrectly answered OR skipped (not present in answersRef)
+          wrongAnswers.push({
+            section_name:   sec.section_name,
+            question_text:  q.text,
+            // Empty string signals a skipped question to the backend
+            user_answer:    recorded ? recorded.user_answer : '',
+            correct_answer: q.correct_answer,
+            difficulty:     q.difficulty,
+            explanation:    q.explanation,
+          })
+        }
+      })
+
+      sectionScores[sec.section_name] = sectionCorrect
     })
 
     // ── Transition to completion screen (no alert) ─────────────────────────
     setFinalScore(weighted)
-    setTotalCorrect(correctAnswers.length)
-    setTotalQuestions(allAnswers.length)
+    setTotalCorrect(correctCount)
+    setTotalQuestions(totalQuestionsCount)
     setIsComplete(true)
     setReportStatus('loading')
 
@@ -966,7 +988,7 @@ export default function QuizComponent({ user }) {
         name:            user?.name  || 'Anonymous',
         email:           user?.email || '',
         score:           weighted,
-        total_questions: allAnswers.length,
+        total_questions: totalQuestionsCount,
         wrong_answers:   wrongAnswers,
         section_scores:  sectionScores,
       }),
