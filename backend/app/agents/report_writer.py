@@ -1417,10 +1417,12 @@ def _add_print_css(html: str) -> str:
 
   /* ── Avoid page breaks inside composite blocks ── */
   .stat-row           { break-inside: avoid; page-break-inside: avoid; }
-  .fingerprint-grid   { break-inside: avoid; page-break-inside: avoid; }
   #radar-mount        { break-inside: avoid; page-break-inside: avoid; }
   .cta                { break-inside: avoid; page-break-inside: avoid; }
   .cta-inner          { break-inside: avoid; page-break-inside: avoid; }
+
+  /* ── Keep the Page 1 CTA glued to the preceding section ── */
+  .cta                { break-before: avoid; page-break-before: avoid; }
 
   /* ── Table row integrity ── */
   tr                  { break-inside: avoid; page-break-inside: avoid; }
@@ -1436,6 +1438,16 @@ def _add_print_css(html: str) -> str:
 
   /* ── Sections may start new pages (auto — not forced) ── */
   section             { break-before: auto;  page-break-before: auto; }
+
+  /* ── Tighten Page 1 sections to keep CTA on Page 1 ──
+     The two sections (hero + fingerprint) are the only content before the CTA.
+     Reducing their padding recovers the space needed without over-squishing. */
+  section:nth-of-type(1) { padding-top: 28px !important; padding-bottom: 28px !important; }
+  section:nth-of-type(2) { padding-top: 28px !important; padding-bottom: 24px !important; }
+  .masthead-row          { padding-top: 14px !important; padding-bottom: 14px !important; }
+
+  /* ── v3 Study Calendar: keep each skill card intact ── */
+  #calendar-v3-cards > div { break-inside: avoid; page-break-inside: avoid; }
 
   /* ── Do not add browser "URL" annotations after links ── */
   a[href]::after      { content: none !important; }

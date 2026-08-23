@@ -15,6 +15,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 validation_*.py
+test_pdf.py
 
 # Mac OS junk (just in case)
 .DS_Store
