@@ -19,3 +19,9 @@ test_pdf.py
 
 # Mac OS junk (just in case)
 .DS_Store
+
+# Local Database & Logs
+backend/data/*.csv
+
+# Generated PDF Reports
+backend/generated_reports/*.pdf

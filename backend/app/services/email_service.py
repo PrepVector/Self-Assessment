@@ -1,34 +1,28 @@
 """
 email_service.py
 ================
-Async email delivery service using the Resend API.
+Async email delivery service using Hostinger SMTP via aiosmtplib.
 
 Sends the candidate's AI-generated PDF assessment report as a direct
 file attachment (not a link).
 
-Environment variable required:
-    RESEND_API_KEY  — obtained from resend.com dashboard
+Environment variables required:
+    SMTP_HOST      — SMTP server hostname (e.g. smtp.hostinger.com)
+    SMTP_PORT      — SMTP port (465 for implicit TLS)
+    SMTP_USERNAME  — Full sender email address used to authenticate
+    SMTP_PASSWORD  — SMTP account password
+    SMTP_FROM      — Display sender address (e.g. "PrepVector <no-reply@prepvector.com>")
 
 Usage:
     from app.services.email_service import send_report_email
     await send_report_email(to_email, candidate_name, pdf_path)
 """
 
-import base64
 import os
 import pathlib
+from email.message import EmailMessage
 
-import resend
-
-
-def _get_api_key() -> str:
-    """Reads RESEND_API_KEY from the environment (set once per process)."""
-    key = os.getenv("RESEND_API_KEY", "")
-    if not key:
-        raise EnvironmentError(
-            "[email_service] RESEND_API_KEY is not set in the environment."
-        )
-    return key
+import aiosmtplib
 
 
 async def send_report_email(
@@ -37,17 +31,21 @@ async def send_report_email(
     pdf_path: str,
 ) -> None:
     """
-    Send the assessment PDF report to the candidate via Resend.
+    Send the assessment PDF report to the candidate via Hostinger SMTP.
 
     Args:
         to_email:       Recipient's email address.
         candidate_name: Candidate's display name (used in the email body).
         pdf_path:       Absolute path to the generated PDF file on disk.
     """
-    # ── Configure Resend SDK ───────────────────────────────────────────────────
-    resend.api_key = _get_api_key()
+    # ── Load SMTP configuration from environment ───────────────────────────────
+    smtp_host     = os.getenv("SMTP_HOST", "")
+    smtp_port     = int(os.getenv("SMTP_PORT", "465"))
+    smtp_username = os.getenv("SMTP_USERNAME", "")
+    smtp_password = os.getenv("SMTP_PASSWORD", "")
+    smtp_from     = os.getenv("SMTP_FROM", "")
 
-    # ── Read and encode the PDF ────────────────────────────────────────────────
+    # ── Read the PDF ───────────────────────────────────────────────────────────
     pdf_file = pathlib.Path(pdf_path)
     if not pdf_file.exists():
         raise FileNotFoundError(
@@ -55,7 +53,6 @@ async def send_report_email(
         )
 
     pdf_bytes = pdf_file.read_bytes()
-    pdf_b64   = base64.b64encode(pdf_bytes).decode("utf-8")
     filename  = pdf_file.name  # e.g. "report_John_Doe_20260725.pdf"
 
     # ── Build email body ───────────────────────────────────────────────────────
@@ -109,27 +106,33 @@ Thank you :)</p>
 
 <p>- Team PrepVector</p>"""
 
-    # ── Build Resend params ────────────────────────────────────────────────────
-    params: resend.Emails.SendParams = {
-        "from": "PrepVector <onboarding@resend.dev>",
-        "to":   [to_email],
-        "subject": "Your Data Science Skill Assessment Report",
-        "text": text_body,
-        "html": html_body,
-        "attachments": [
-            {
-                "filename": filename,
-                "content":  pdf_b64,
-            }
-        ],
-    }
+    # ── Construct EmailMessage ─────────────────────────────────────────────────
+    msg = EmailMessage()
+    msg["From"]    = smtp_from
+    msg["To"]      = to_email
+    msg["Subject"] = "Your Data Science Skill Assessment Report"
+    msg.set_content(text_body)
+    msg.add_alternative(html_body, subtype="html")
+    msg.add_attachment(
+        pdf_bytes,
+        maintype="application",
+        subtype="pdf",
+        filename=filename,
+    )
 
-    # ── Send ───────────────────────────────────────────────────────────────────
+    # ── Send via Hostinger SMTP (implicit TLS, port 465) ──────────────────────
     try:
-        result = resend.Emails.send(params)
+        await aiosmtplib.send(
+            msg,
+            hostname=smtp_host,
+            port=smtp_port,
+            username=smtp_username,
+            password=smtp_password,
+            use_tls=True,
+        )
         print(
             f"[email_service] ✅  Report email sent to '{to_email}' "
-            f"(Resend ID: {result.get('id', 'n/a')})"
+            f"via {smtp_host}:{smtp_port}"
         )
     except Exception as exc:
         print(f"[email_service] ❌  Failed to send report email to '{to_email}': {exc}")
