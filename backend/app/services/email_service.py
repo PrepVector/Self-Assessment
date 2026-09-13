@@ -93,7 +93,7 @@ Thank you :)
   - A list of resources to get started.
 </p>
 
-<p>As the next step, our mentors can provide a personalized plan on how to best leverage the resources, especially on your areas of improvement. <a href="#">Book a free consultation call</a> with <strong>Siddarth R</strong>, a seasoned Senior Data Science Manager from Microsoft.</p>
+<p>As the next step, our mentors can provide a personalized plan on how to best leverage the resources, especially on your areas of improvement. <a href="https://calendly.com/siddarthr-mba/30min">Book a free consultation call</a> with <strong>Siddarth R</strong>, a seasoned Senior Data Science Manager from Microsoft.</p>
 
 <p>During this call, you'll have the chance to:</p>
 <p>
@@ -102,7 +102,7 @@ Thank you :)
   🔑 Make the right career choices with guidance from an expert.
 </p>
 
-<p><a href="#">Book a call now</a> to get started with your personalized upskilling journey!</p>
+<p><a href="https://calendly.com/siddarthr-mba/30min">Book a call now</a> to get started with your personalized upskilling journey!</p>
 
 <p>If you have any queries, feel free to reach out to <a href="mailto:operations@prepvector.com">operations@prepvector.com</a>.<br>
 Thank you :)</p>
