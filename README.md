@@ -1,28 +1,26 @@
 # 🧠 PrepVector Cognitive Assessment — AI-Powered Technical Evaluation Platform
 
-> **An enterprise-grade, end-to-end technical evaluation platform designed to test Data Science Experts using FastAPI, React, Google Gemini 3.5 Flash, Playwright, and Hostinger SMTP.**
+> **An end-to-end technical assessment platform for evaluating Data Science expertise using React, FastAPI, Google Gemini, Playwright, Google Sheets, and Hostinger SMTP.**
 
 ---
 
 ## 📖 Overview
 
-Cognitive Assessment is a sophisticated technical evaluation engine designed to dynamically assess candidate proficiency across core Data Science domains.
+The **PrepVector Cognitive Assessment** platform is an AI-powered technical evaluation system designed to dynamically assess candidate proficiency across core Data Science domains.
 
-The application utilizes a **React-based frontend** for frictionless candidate intake and testing, paired with a high-performance **FastAPI backend**. It automatically generates balanced assessment samples, evaluates submissions using **Google's Gemini AI**, renders visually stunning feedback reports natively as PDFs via **Playwright**, and asynchronously dispatches those reports directly to candidates using **Hostinger SMTP**.
-
-The system demonstrates a fully decoupled, zero-dependency data architecture, utilizing dual persistence (local CSV and Google Sheets API) to eliminate external database bloat while maintaining strict data integrity.
+The application uses a **React + Vite** frontend for frictionless candidate interaction and a **FastAPI** backend for assessment generation, scoring, and AI-driven analysis. It generates balanced 35-question quizzes from a master bank, scores them using a difficulty-weighted model, and leverages **Google Gemini** to produce deep technical insights. Finally, it natively renders professional PDF reports via **Playwright** and asynchronously dispatches them to candidates using **Hostinger SMTP**.
 
 ---
 
 # ✨ Key Features
 
-- 🤖 **Gemini-Powered Evaluation** — Automated grading and deep technical blind-spot analysis
-- 📄 **Playwright PDF Rendering** — Programmatic generation of highly styled, professional assessment reports
-- 📧 **Native SMTP Delivery** — Asynchronous email dispatch via Hostinger SMTP (aiosmtplib)
-- 📊 **Dynamic Smoke Sampler** — Algorithmic extraction of balanced 35-question quizzes from a 147-question master bank
-- 🗄️ **Dual-Layer Persistence** — Instant local CSV logging backed by Google Sheets API integration
-- 📈 **"Clean-70" Scoring Model** — Difficulty-weighted point distribution across 7 domains
-- 🎨 **Automated Asset Generation** — Python scripts to dynamically generate chart and image assets for specific questions
+- 🤖 **AI-Powered Evaluation** — Gemini-based analysis of candidate performance with robust fallback handling (Groq / alternative Gemini models)
+- 📊 **Dynamic Stratified Sampling** — Algorithmic generation of balanced 35-question quizzes from a 147-question master bank
+- 🧮 **"Clean-70" Scoring Model** — Difficulty-weighted point distribution across 7 core Data Science domains
+- 📄 **Native PDF Rendering** — Programmatic generation of highly styled assessment reports using Playwright/Chromium
+- 📧 **SMTP Email Dispatch** — Asynchronous delivery of PDF reports natively through Hostinger SMTP
+- 🗄️ **Dual-Layer Persistence** — Instant local CSV logging backed by Google Sheets API synchronization
+- 🎨 **Automated Asset Generation** — Python scripts to dynamically generate necessary charts and visual assets using Matplotlib
 
 ---
 
@@ -31,61 +29,74 @@ The system demonstrates a fully decoupled, zero-dependency data architecture, ut
 | Category | Technologies |
 |-----------|--------------|
 | Frontend | React (Vite), Tailwind CSS, React Markdown |
-| Backend | FastAPI (Python 3.12+), Uvicorn |
-| AI Engine | Google Gemini 3.5 Flash (Primary), Groq (Fallback) |
-| PDF Rendering | Playwright, FPDF2 (Legacy Fallback) |
+| Backend | FastAPI (Python 3.12.x), Uvicorn |
+| AI Engine | Google Gemini (Primary), Groq (Fallback) |
+| PDF Generation | Playwright, Chromium, FPDF2 (Legacy Fallback) |
 | Email Dispatch | Hostinger SMTP (aiosmtplib) |
 | Data Persistence | Python CSV, Google Sheets API (gspread) |
-| Asset Generation | Matplotlib, Seaborn, Plotly |
+| Asset Generation | Matplotlib, NumPy |
 
 ---
 
 # 🏗 System Architecture
 
 ```text
-                          Candidate
-                              │
-         ┌────────────────────┼─────────────────────┐
-         │                    │                      │
-         ▼                    ▼                      ▼
-  Candidate Intake      Assessment Quiz         Report Delivery
-      (React)          (Dynamic Sampling)         (Email Inbox)
-         │                    │                       ▲
-         └──────────────┬─────┘                       │
-                         ▼                             │
-                FastAPI Backend Core                   │
-                         │                              │
-         ┌───────────────┼───────────────┐              │
-         ▼               ▼               ▼              │
-   Google Sheets    CSV Logger     Gemini 3.5 AI         │
-   (Persistence)   (Local Backup)   (Evaluation)         │
-                                        │                │
-                                        ▼                │
-                                Playwright Engine        │
-                              (PDF Report Render)        │
-                                        │                │
-                                        ▼                │
-                              Hostinger SMTP Engine ─────┘
+                         ┌──────────────────┐
+                         │    Candidate     │
+                         └────────┬─────────┘
+                                  │
+                                  ▼
+                      ┌────────────────────────┐
+                      │    React Frontend      │
+                      │    Vite + Tailwind     │
+                      └───────────┬────────────┘
+                                  │
+                                  ▼
+                      ┌────────────────────────┐
+                      │    FastAPI Backend     │
+                      └───────────┬────────────┘
+                                  │
+            ┌─────────────────────┼─────────────────────┐
+            │                     │                     │
+            ▼                     ▼                     ▼
+    ┌───────────────┐     ┌───────────────┐     ┌───────────────┐
+    │ Question Bank │     │    Scoring    │     │   AI Engine   │
+    │    147 Qs     │     │   Clean-70    │     │    Gemini     │
+    └───────────────┘     └───────────────┘     └───────┬───────┘
+                                                        │
+                                                ┌───────┴───────┐
+                                                │Model Fallbacks│
+                                                └───────┬───────┘
+                                                        │
+            ┌──────────────────┬────────────────────────┘
+            │                  │                  │
+            ▼                  ▼                  ▼
+    ┌──────────────┐   ┌──────────────┐   ┌────────────────┐
+    │ CSV Logging  │   │ Google Sheets│   │ Report Engine  │
+    └──────────────┘   └──────────────┘   └───────┬────────┘
+                                                  │
+                                                  ▼
+                                          ┌──────────────┐
+                                          │  Playwright  │
+                                          │ PDF Renderer │
+                                          └───────┬──────┘
+                                                  │
+                                                  ▼
+                                          ┌──────────────┐
+                                          │  Hostinger   │
+                                          │  SMTP Email  │
+                                          └──────────────┘
 ```
 
 ---
 
-# 🤖 Core Developer Pipelines
+# 🎯 Assessment & Scoring Methodology
 
-## 1️⃣ The Question Bank Builder
+The platform evaluates candidates across **7 Data Science domains**: SQL, Python, Pandas, Data Visualization, Applied Statistics, Machine Learning, and A/B Testing.
 
-The platform operates on a strict **147-question JSON bank** covering 7 domains (SQL, Python, Pandas, Data Visualization, Applied Statistics, Machine Learning, A/B Testing).
-
-- **Location:** `scripts/build_question_bank.py`
-- **Workflow:** Utilizes Pydantic validation to enforce strict formatting and LaTeX math generation.
-- **Developer Tip:** To conserve API quota and prevent rate limits, generate one section at a time. Open the script, comment out completed sections in the `SECTIONS` array, and run the script for the specific target domain.
-
-## 2️⃣ Dynamic Asset Generator
-
-Questions requiring visual charts or graphs are handled autonomously.
-
-- **Location:** `scripts/generate_images.py`
-- **Workflow:** The script parses `data/question_bank.json`, identifies questions flagged for visual assets, generates the appropriate plots using Matplotlib/Seaborn, and saves them locally for the frontend to render.
+- **The Bank** — 147 total questions (21 per domain)
+- **The Sample** — Each assessment dynamically samples 35 questions (5 per domain: 2 Easy, 2 Moderate, 1 Advanced)
+- **Clean-70 Scoring** — Points are awarded by difficulty (Easy = 1 pt, Moderate = 2 pts, Advanced = 4 pts). Each domain contributes a maximum of 10 points, resulting in a normalized final score out of **70**
 
 ---
 
@@ -97,38 +108,30 @@ Self-Assessment/
 ├── backend/
 │   ├── app/
 │   │   ├── agents/          # Gemini AI evaluation logic
-│   │   ├── api/             # FastAPI routing (submit_answers.py)
+│   │   ├── api/             # FastAPI routing
 │   │   └── services/        # Hostinger SMTP & Google Sheets logic
 │   ├── data/                # CSV logs and question_bank.json
-│   ├── generated_reports/   # Playwright PDF output directory
+│   ├── generated_reports/   # Playwright PDF output directory (Ignored by Git)
 │   ├── scripts/             # Builder and asset generation scripts
 │   ├── requirements.txt
 │   └── .env
 │
 └── frontend/
     ├── src/
-    │   ├── components/      # React UI components
-    │   └── assets/
-    ├── package.json
-    └── tailwind.config.js
+    └── package.json
 ```
 
 ---
 
 # 🚀 Local Development Setup
 
-> You must run the **Backend** and **Frontend** concurrently in two separate terminal windows.
+> The project consists of two decoupled applications that must be run **concurrently**. Ensure you have **Python 3.12.x** and **Node.js** installed.
 
 ## Phase 1: Backend Setup (FastAPI)
 
 ```bash
 # 1. Clone the repository and navigate to backend
 git clone https://github.com/PrepVector/Self-Assessment.git
-
-or
-
-git clone -b ritam-development https://github.com/PrepVector/Self-Assessment.git
-
 cd Self-Assessment/backend
 
 # 2. Create and activate a virtual environment
@@ -169,24 +172,41 @@ Vite will serve the frontend on **http://localhost:5173**
 
 ---
 
-# 🔐 Environment Variables
+# 🔐 Environment Configuration
 
 Create a `.env` file in the `backend/` directory. **Never commit this file to version control.**
 
 ```env
-# AI & Persistence Configuration
-GEMINI_API_KEY="your_google_gemini_key"
+# AI Configuration
+GEMINI_API_KEY="your_google_gemini_api_key"
 GEMINI_MODEL="gemini-3.5-flash"
-GROQ_API_KEY="your_groq_key"
-SPREADSHEET_ID="your_google_sheets_id"
+GROQ_API_KEY="your_groq_api_key"
 
-# Hostinger SMTP Configuration
+# Data Persistence
+SPREADSHEET_ID="your_google_sheet_id"
+
+# Hostinger SMTP
 SMTP_HOST="smtp.hostinger.com"
 SMTP_PORT=465
 SMTP_USERNAME="internal@prepvector.com"
 SMTP_PASSWORD="your_smtp_password"
 SMTP_FROM="internal@prepvector.com"
 ```
+
+## Additional Credentials
+
+Google Sheets functionality requires a valid `credentials.json` file placed in the `backend/` directory. This is excluded from Git via `.gitignore` and must be provisioned manually in your deployment environment.
+
+---
+
+# 🌍 Production Deployment Notes
+
+When moving from local development to production, the IT/DevOps team must configure the following:
+
+- **API URLs** — Update the frontend to point to the production backend URL instead of `http://localhost:8000`
+- **CORS Configuration** — Update the FastAPI `allow_origins` array to accept requests from the deployed frontend domain
+- **Secret Management** — Provision all `.env` variables and the `credentials.json` file securely on the host server
+- **Playwright Support** — Ensure the production host (e.g., Docker container, VPS) has the necessary OS dependencies to run Chromium for PDF generation
 
 ---
 

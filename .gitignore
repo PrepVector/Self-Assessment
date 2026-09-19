@@ -24,4 +24,4 @@ test_pdf.py
 backend/data/*.csv
 
 # Generated PDF Reports
-backend/generated_reports/*.pdf
+backend/generated_reports/
