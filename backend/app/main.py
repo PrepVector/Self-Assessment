@@ -13,18 +13,24 @@ from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 from app.api import generate_quiz, submit_answers, download_report
 
+import os
+
 # Load environment variables
 load_dotenv()
 
 # Initialize the FastAPI app (no lifespan / DB connections needed)
 app = FastAPI(title="Cognitive Career Assessment API")
 
-# Configure CORS — explicitly allow the Vite frontend origin.
-# NOTE: allow_credentials=True is incompatible with allow_origins=["*"],
-#       so we must list the exact origin(s).
+# Configure CORS — explicitly allow frontend origins
+_raw_origins = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:5173,http://localhost:3000,https://selfassessment.prepvector.com"
+)
+allowed_origins = [origin.strip() for origin in _raw_origins.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
