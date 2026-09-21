@@ -1,0 +1,38 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# docker-compose for the PrepVector backend.
+#
+# Usage:
+#   docker compose up --build          # build + run
+#   docker compose up -d               # run detached
+#   docker compose down                # stop + remove
+#
+# Secrets are injected at runtime from the root .env (never baked into the image).
+# Runtime output (CSV log + generated PDFs) is persisted to the host via mounts
+# so it survives container restarts.
+#
+# NOTE: GEMINI_API_KEY MUST be set to a valid, non-empty key in .env. The app
+# constructs the Gemini client at import time, so an empty key makes the
+# container exit immediately on startup.
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: prepvector-backend:latest
+    container_name: prepvector-backend
+    ports:
+      - "8000:8000"
+    # Load GEMINI_API_KEY, SMTP_*, SPREADSHEET_ID, etc. from the root env file.
+    env_file:
+      - ./.env
+    volumes:
+      # Persist CSV assessment logs across container restarts.
+      - ./backend/data:/app/data
+      # Persist generated PDF reports.
+      - ./backend/generated_reports:/app/generated_reports
+      # To enable Google Sheets, create backend/credentials.json first, then
+      # uncomment the next line. Leaving it uncommented WITHOUT the file present
+      # makes Docker create a directory in its place and breaks gspread.
+      # - ./backend/credentials.json:/app/credentials.json:ro
+    restart: unless-stopped
