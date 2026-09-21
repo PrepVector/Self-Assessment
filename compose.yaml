@@ -36,3 +36,9 @@ services:
       # makes Docker create a directory in its place and breaks gspread.
       # - ./backend/credentials.json:/app/credentials.json:ro
     restart: unless-stopped
+    networks:
+      - komodo_default
+
+networks:
+  komodo_default:
+    external: true
