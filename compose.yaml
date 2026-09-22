@@ -34,7 +34,7 @@ services:
       # To enable Google Sheets, create backend/credentials.json first, then
       # uncomment the next line. Leaving it uncommented WITHOUT the file present
       # makes Docker create a directory in its place and breaks gspread.
-      # - ./backend/credentials.json:/app/credentials.json:ro
+      - ./backend/credentials.json:/app/credentials.json:ro
     restart: unless-stopped
     networks:
       - komodo_default
