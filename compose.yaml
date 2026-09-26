@@ -30,7 +30,7 @@ services:
       # Persist CSV assessment logs across container restarts.
       - ./backend/data:/app/data
       # Persist generated PDF reports.
-      - ./backend/generated_reports:/app/generated_reports
+      - ./generated_reports:/app/generated_reports
       # To enable Google Sheets, create backend/credentials.json first, then
       # uncomment the next line. Leaving it uncommented WITHOUT the file present
       # makes Docker create a directory in its place and breaks gspread.
