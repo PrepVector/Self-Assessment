@@ -116,10 +116,18 @@ Self-Assessment/
 │   ├── requirements.txt
 │   └── .env
 │
-└── frontend/
-    ├── src/
-    └── package.json
+├── frontend/
+│   ├── src/
+│   └── package.json
+│
+└── report_reference/
+    ├── skill_assessment_report_template.html
+    ├── resources_section.html
+    ├── study_calendar_section_v3.html
+    └── report_generation_algorithm.md
 ```
+
+> **Note:** The `report_reference/` directory contains the HTML templates and supporting files required by the backend's PDF report-generation pipeline. The `skill_assessment_report_template.html` file is required at runtime for generating the final assessment PDF.
 
 ---
 
@@ -205,8 +213,11 @@ When moving from local development to production, the IT/DevOps team must config
 
 - **API URLs** — Update the frontend to point to the production backend URL instead of `http://localhost:8000`
 - **CORS Configuration** — Update the FastAPI `allow_origins` array to accept requests from the deployed frontend domain
-- **Secret Management** — Provision all `.env` variables and the `credentials.json` file securely on the host server
-- **Playwright Support** — Ensure the production host (e.g., Docker container, VPS) has the necessary OS dependencies to run Chromium for PDF generation
+- **Secret Management** — Provision all required environment variables securely, including Gemini, Groq, Google Sheets, and SMTP credentials
+- **Google Sheets Authentication** — Provision the required `credentials.json` securely in the production environment
+- **Report Templates** — Ensure the root-level `report_reference/` directory is available to the backend at runtime. The `skill_assessment_report_template.html` file is required for PDF report generation
+- **Playwright/Chromium** — Ensure the production environment has the required Playwright/Chromium runtime support for PDF generation
+- **SMTP** — Ensure the production environment can connect to Hostinger SMTP on port 465
 
 ---
 
