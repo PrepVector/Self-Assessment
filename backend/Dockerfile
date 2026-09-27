@@ -29,6 +29,11 @@ RUN playwright install chromium
 # 3. Copy the application source.
 COPY . .
 
+# 3b. Copy the report HTML template from the extra build context (see
+#     compose.yaml). report_writer.py resolves it as <backend>/../report_reference,
+#     which is /report_reference inside the container.
+COPY --from=report_reference . /report_reference
+
 # 4. The app writes CSV logs and PDF reports at runtime — make sure the dirs exist.
 RUN mkdir -p /app/data /app/generated_reports
 
