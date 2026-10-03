@@ -44,4 +44,4 @@ app.include_router(download_report.router, prefix="/api")
 
 @app.get("/")
 def read_root():
-    return {"message": "Welcome to the Cognitive Career Assessment API. The backend is running."}
+    return {"message": "Welcome to the Cognitive Career Assessment API. The backend is running. This is edited version of the code."}
