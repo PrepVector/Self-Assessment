@@ -5,6 +5,8 @@ import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import { API_ENDPOINTS, API_BASE_URL } from '../config/api';
+
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
@@ -89,8 +91,8 @@ function CompletionScreen({ finalScore, maxScore, totalCorrect, totalQuestions, 
   // Determine a motivating tier message
   const tierLabel =
     percentage >= 75 ? { text: 'Excellent Work!', color: 'text-green-400' }
-    : percentage >= 50 ? { text: 'Great Effort!', color: 'text-blue-500' }
-    : { text: 'Keep Practicing', color: 'text-orange-400' }
+      : percentage >= 50 ? { text: 'Great Effort!', color: 'text-blue-500' }
+        : { text: 'Keep Practicing', color: 'text-orange-400' }
 
   async function handleSendReport() {
     if (isSubmitting) return
@@ -109,7 +111,7 @@ function CompletionScreen({ finalScore, maxScore, totalCorrect, totalQuestions, 
         email: email.trim(),
         assessment_id: assessmentId,
       }
-      const res = await fetch('http://localhost:8000/api/submit-email', {
+      const res = await fetch(API_ENDPOINTS.SUBMIT_EMAIL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -271,9 +273,8 @@ function CompletionScreen({ finalScore, maxScore, totalCorrect, totalQuestions, 
                   onKeyDown={e => e.key === 'Enter' && handleSendReport()}
                   placeholder="your@email.com"
                   disabled={isSubmitting || reportStatus === 'loading'}
-                  className={`w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all duration-200 ${
-                    isSubmitting || reportStatus === 'loading' ? 'opacity-50 cursor-not-allowed' : ''
-                  }`}
+                  className={`w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 text-white placeholder-gray-600 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/50 transition-all duration-200 ${isSubmitting || reportStatus === 'loading' ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                 />
                 {emailError && (
                   <p className="text-red-400 text-xs mt-1.5 pl-1">{emailError}</p>
@@ -284,11 +285,10 @@ function CompletionScreen({ finalScore, maxScore, totalCorrect, totalQuestions, 
                 id="send-report-btn"
                 onClick={handleSendReport}
                 disabled={isSubmitting || reportStatus === 'loading'}
-                className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-100 ${
-                  isSubmitting || reportStatus === 'loading'
-                    ? 'bg-blue-700 text-blue-200 opacity-60 cursor-not-allowed'
-                    : 'bg-blue-600 text-white shadow-lg shadow-blue-900/40 hover:bg-blue-700 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(59,130,246,0.45)]'
-                }`}
+                className={`w-full py-3.5 rounded-xl font-bold text-sm transition-all duration-200 active:scale-100 ${isSubmitting || reportStatus === 'loading'
+                  ? 'bg-blue-700 text-blue-200 opacity-60 cursor-not-allowed'
+                  : 'bg-blue-600 text-white shadow-lg shadow-blue-900/40 hover:bg-blue-700 hover:scale-[1.02] hover:shadow-[0_0_24px_rgba(59,130,246,0.45)]'
+                  }`}
               >
                 {isSubmitting ? (
                   <span className="inline-flex items-center justify-center gap-2">
@@ -825,7 +825,7 @@ export default function QuizComponent({ user }) {
     answersRef.current = {}
 
     try {
-      const res = await fetch('http://localhost:8000/api/generate-quiz', {
+      const res = await fetch(API_ENDPOINTS.GENERATE_QUIZ, {
         method: 'POST',
       })
       if (!res.ok) throw new Error(`Server responded with status ${res.status}: ${res.statusText}`)
@@ -959,13 +959,13 @@ export default function QuizComponent({ user }) {
         } else {
           // Incorrectly answered OR skipped (not present in answersRef)
           wrongAnswers.push({
-            section_name:   sec.section_name,
-            question_text:  q.text,
+            section_name: sec.section_name,
+            question_text: q.text,
             // Empty string signals a skipped question to the backend
-            user_answer:    recorded ? recorded.user_answer : '',
+            user_answer: recorded ? recorded.user_answer : '',
             correct_answer: q.correct_answer,
-            difficulty:     q.difficulty,
-            explanation:    q.explanation,
+            difficulty: q.difficulty,
+            explanation: q.explanation,
           })
         }
       })
@@ -981,16 +981,16 @@ export default function QuizComponent({ user }) {
     setReportStatus('loading')
 
     // ── Await POST so we can capture download_url ────────────────────────
-    fetch('http://localhost:8000/api/submit-answers', {
+    fetch(API_ENDPOINTS.SUBMIT_ANSWERS, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        name:            user?.name  || 'Anonymous',
-        email:           user?.email || '',
-        score:           weighted,
+        name: user?.name || 'Anonymous',
+        email: user?.email || '',
+        score: weighted,
         total_questions: totalQuestionsCount,
-        wrong_answers:   wrongAnswers,
-        section_scores:  sectionScores,
+        wrong_answers: wrongAnswers,
+        section_scores: sectionScores,
       }),
     })
       .then(res => {
@@ -1002,7 +1002,10 @@ export default function QuizComponent({ user }) {
           setAssessmentId(data.assessment_id)
         }
         if (data.download_url) {
-          setDownloadUrl(data.download_url)
+          const finalDownloadUrl = data.download_url.startsWith('http')
+            ? data.download_url
+            : `${API_BASE_URL}${data.download_url}`
+          setDownloadUrl(finalDownloadUrl)
           setReportStatus('ready')
         } else {
           setReportStatus('failed')

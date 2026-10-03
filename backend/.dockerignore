@@ -1,0 +1,26 @@
+# Local virtualenv — never copy the host's venv into the image.
+venv/
+env/
+.venv/
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Secrets — provided at runtime via env, not baked into the image.
+.env
+.env.*
+credentials.json
+
+# Runtime output that should not be part of the image.
+generated_reports/
+data/*.csv
+
+# Editor / OS junk
+.DS_Store
+*.swp
+
+# Docker files themselves
+Dockerfile
+.dockerignore
