@@ -27,7 +27,13 @@ services:
     container_name: prepvector-backend
     ports:
       - "8000:8000"
-    # Load GEMINI_API_KEY, SMTP_*, SPREADSHEET_ID, etc. from the root env file.
+    # Load GEMINI_API_KEY, SMTP_*, SPREADSHEET_ID, GOOGLE_CREDENTIALS_B64, etc.
+    # from the root env file.
+    #
+    # GOOGLE_CREDENTIALS_B64 = base64 of the service-account credentials.json.
+    # The image's entrypoint decodes it to /app/credentials.json at container
+    # start, so no credentials file is needed on the host. Generate it with:
+    #   base64 -i backend/credentials.json | tr -d '\n'
     env_file:
       - ./.env
     volumes:
@@ -35,10 +41,6 @@ services:
       - ./backend/data:/app/data
       # Persist generated PDF reports.
       - ./generated_reports:/app/generated_reports
-      # To enable Google Sheets, create backend/credentials.json first, then
-      # uncomment the next line. Leaving it uncommented WITHOUT the file present
-      # makes Docker create a directory in its place and breaks gspread.
-      - ./backend/credentials.json:/app/credentials.json:ro
     restart: unless-stopped
     networks:
       - komodo_default

@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # ─────────────────────────────────────────────────────────────────────────────
 # Backend Dockerfile — PrepVector Cognitive Assessment API
 #
@@ -37,8 +38,34 @@ COPY --from=report_reference . /report_reference
 # 4. The app writes CSV logs and PDF reports at runtime — make sure the dirs exist.
 RUN mkdir -p /app/data /app/generated_reports
 
+# 5. Entrypoint that materialises the Google service-account key at container
+#    START (not build), so the secret never lands in an image layer.
+#    google_sheets.py reads <backend>/credentials.json == /app/credentials.json.
+#    Provide the key as GOOGLE_CREDENTIALS_B64 (base64 of credentials.json) via
+#    env / .env. A missing or bad value only disables Sheets logging, which the
+#    app already treats as non-fatal — the API still starts.
+COPY --chmod=755 <<'EOF' /usr/local/bin/docker-entrypoint.sh
+#!/bin/sh
+CREDS_PATH=/app/credentials.json
+if [ -n "$GOOGLE_CREDENTIALS_B64" ]; then
+  if printf '%s' "$GOOGLE_CREDENTIALS_B64" | base64 -d > "$CREDS_PATH" 2>/dev/null \
+     && python3 -c 'import json,sys; json.load(open(sys.argv[1]))' "$CREDS_PATH" 2>/dev/null; then
+    chmod 600 "$CREDS_PATH"
+    echo "[entrypoint] Wrote Google credentials to $CREDS_PATH"
+  else
+    rm -f "$CREDS_PATH"
+    echo "[entrypoint] WARNING: GOOGLE_CREDENTIALS_B64 is not valid base64-encoded JSON; Google Sheets disabled." >&2
+  fi
+elif [ ! -f "$CREDS_PATH" ]; then
+  echo "[entrypoint] GOOGLE_CREDENTIALS_B64 not set; Google Sheets disabled." >&2
+fi
+exec "$@"
+EOF
+
 # The API listens on 8000 inside the container.
 EXPOSE 8000
+
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 # Bind to 0.0.0.0 so the port is reachable from outside the container.
 # No --reload in a container image; that's a local-dev convenience only.
